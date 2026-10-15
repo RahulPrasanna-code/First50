@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19" />
+      <stop offset="100%" stop-color="#111827" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <rect width="512" height="512" rx="112" fill="url(#bg)" stroke="#1e293b" stroke-width="8" />
+  
+  <!-- Radar circles -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#1e293b" stroke-width="3" stroke-dasharray="8 8" />
+  <circle cx="256" cy="256" r="120" fill="none" stroke="#334155" stroke-width="3" />
+  <circle cx="256" cy="256" r="60" fill="none" stroke="#10b981" stroke-width="3" opacity="0.6" />
+  
+  <!-- Target Crosshairs -->
+  <line x1="256" y1="56" x2="256" y2="456" stroke="#1e293b" stroke-width="2" />
+  <line x1="56" y1="256" x2="456" y2="256" stroke="#1e293b" stroke-width="2" />
+  
+  <!-- Lightning bolt / 50 symbol -->
+  <path d="M256 120 L200 270 L250 270 L220 392 L320 232 L266 232 Z" fill="url(#accent)" filter="url(#glow)" />
+  
+  <!-- Badge text "50" -->
+  <text x="256" y="440" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="900" fill="#10b981" text-anchor="middle" letter-spacing="4">FIRST 50</text>
+</svg>

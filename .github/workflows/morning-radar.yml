@@ -1,0 +1,36 @@
+name: Automated Morning Job Radar (8:30 AM IST)
+
+on:
+  schedule:
+    # 03:00 UTC = 08:30 AM IST, Monday to Friday
+    - cron: '0 3 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  poll-and-score-jobs:
+    name: Poll ATS Boards & Score with Gemini AI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Morning Radar API
+        run: |
+          echo "Triggering First50 Morning Radar scan at $(date)..."
+          DEPLOYED_URL="${{ secrets.APP_URL }}"
+          if [ -z "$DEPLOYED_URL" ]; then
+            echo "APP_URL secret is not set. Using fallback curl test against localhost or preview."
+            DEPLOYED_URL="https://first50-jobhunt.vercel.app"
+          fi
+          
+          RESPONSE=$(curl -s -X POST "$DEPLOYED_URL/api/cron/morning-radar" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --write-out "HTTPSTATUS:%{http_code}")
+          
+          HTTP_BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+          HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          
+          echo "Status: $HTTP_STATUS"
+          echo "Response: $HTTP_BODY"
+          
+          if [ "$HTTP_STATUS" -ne 200 ] && [ "$HTTP_STATUS" -ne 000 ]; then
+            echo "Warning: Received HTTP $HTTP_STATUS from radar endpoint"
+          fi
