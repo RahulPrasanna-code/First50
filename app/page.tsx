@@ -42,7 +42,7 @@ import {
 import { getTodayKeyIST, isPast72Hours } from "@/lib/utils";
 import { subscribeToAuth, signInWithGoogle } from "@/lib/firebase";
 import { User } from "firebase/auth";
-import { SEED_PROFILE, ROTATING_PREP_TOPICS } from "@/data/seed";
+import { SEED_PROFILE, ROTATING_PREP_TOPICS, isRahulUser } from "@/data/seed";
 import {
   Radar,
   Zap,
@@ -126,7 +126,7 @@ export default function Home() {
         getBragSheet(userId, userEmail),
       ]);
 
-      if (userId && !loadedProfile && userEmail !== "rahulprasannats@gmail.com") {
+      if (userId && !loadedProfile && !isRahulUser(userEmail)) {
         setIsOnboardingOpen(true);
       } else if (loadedProfile) {
         setProfile(loadedProfile);

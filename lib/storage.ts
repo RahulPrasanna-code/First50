@@ -25,6 +25,7 @@ import {
   DEMO_GUEST_PROFILE,
   RAHUL_PRIVATE_BRAG_ITEMS,
   DEMO_GUEST_BRAG_ITEMS,
+  isRahulUser,
 } from "@/data/seed";
 import { getTodayKeyIST } from "./utils";
 
@@ -75,10 +76,14 @@ export async function getProfile(
         return snap.data().profile as UserProfile;
       }
 
-      // If user is Rahul Prasanna, automatically seed his private Fidelity profile
-      if (userEmail === "rahulprasannats@gmail.com") {
-        await setDoc(ref, { profile: RAHUL_PRIVATE_PROFILE }, { merge: true });
-        return RAHUL_PRIVATE_PROFILE;
+      // If user is Rahul Prasanna (either email), automatically seed his private Fidelity profile
+      if (isRahulUser(userEmail)) {
+        const profileToSeed = {
+          ...RAHUL_PRIVATE_PROFILE,
+          email: userEmail || RAHUL_PRIVATE_PROFILE.email,
+        };
+        await setDoc(ref, { profile: profileToSeed }, { merge: true });
+        return profileToSeed;
       }
 
       // For any other new user, return null so onboarding wizard is triggered
@@ -88,9 +93,9 @@ export async function getProfile(
     }
   }
 
-  // Guest / Demo mode: Check if local profile is Rahul's old seed; if so, purge to protect privacy
+  // Guest / Demo mode: Check if local profile is Rahul's private account; if so, purge to protect privacy
   const local = getLocal<UserProfile | null>(STORAGE_KEYS.PROFILE, null);
-  if (local && local.email === "rahulprasannats@gmail.com") {
+  if (local && isRahulUser(local.email)) {
     setLocal(STORAGE_KEYS.PROFILE, DEMO_GUEST_PROFILE);
     return DEMO_GUEST_PROFILE;
   }
@@ -372,8 +377,8 @@ export async function getBragSheet(
         return snap.docs.map((d) => d.data() as BragItem);
       }
 
-      // If user is Rahul Prasanna, automatically seed his 5 private STAR stories
-      if (userEmail === "rahulprasannats@gmail.com") {
+      // If user is Rahul Prasanna (either email), automatically seed his 5 private STAR stories
+      if (isRahulUser(userEmail)) {
         for (const item of RAHUL_PRIVATE_BRAG_ITEMS) {
           const itemRef = doc(db, "users", userId, "bragSheet", item.id);
           await setDoc(itemRef, item, { merge: true });

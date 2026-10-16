@@ -1,12 +1,26 @@
 import { UserProfile, DailyRoutineTask, Application, ScrapedJob, BragItem, DeepPrepTopic } from "@/types";
 
 // ==========================================
-// 1. RAHUL'S PRIVATE PRODUCTION DATA
-// (Loaded ONLY when rahulprasannats@gmail.com signs in)
+// 1. RAHUL'S ADMIN & PRIVATE ACCOUNT EMAILS
+// (Both emails unlock private Fidelity seed data)
+// ==========================================
+export const RAHUL_ADMIN_EMAILS = [
+  "rahulprasannats@gmail.com",
+  "prasannarahul22@gmail.com",
+];
+
+export function isRahulUser(email?: string | null): boolean {
+  if (!email) return false;
+  return RAHUL_ADMIN_EMAILS.includes(email.toLowerCase().trim());
+}
+
+// ==========================================
+// 2. RAHUL'S PRIVATE PRODUCTION DATA
+// (Loaded ONLY when one of Rahul's Google accounts signs in)
 // ==========================================
 export const RAHUL_PRIVATE_PROFILE: UserProfile = {
   name: "Rahul Prasanna T S",
-  email: "rahulprasannats@gmail.com",
+  email: "prasannarahul22@gmail.com",
   currentRole: "Software Engineer",
   company: "Fidelity Investments India (Communications Orchestration Platform)",
   totalExperience: "2+ Years (Full-time since Aug 2024; Software Engineering Intern Jan 2024 – Jul 2024)",
