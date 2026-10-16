@@ -39,7 +39,7 @@ import {
 import { getTodayKeyIST, isPast72Hours } from "@/lib/utils";
 import { subscribeToAuth } from "@/lib/firebase";
 import { User } from "firebase/auth";
-import { SEED_PROFILE } from "@/data/seed";
+import { SEED_PROFILE, ROTATING_PREP_TOPICS } from "@/data/seed";
 import {
   Radar,
   Zap,
@@ -50,6 +50,11 @@ import {
   ChevronDown,
   ChevronUp,
   Award,
+  Code2,
+  Cpu,
+  BookOpen,
+  ExternalLink,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function Home() {
@@ -69,7 +74,7 @@ export default function Home() {
   const [bragItems, setBragItems] = useState<BragItem[]>([]);
 
   // UI State
-  const [activeTab, setActiveTab] = useState<"radar" | "strike" | "pitch" | "pipeline" | "brag">("radar");
+  const [activeTab, setActiveTab] = useState<"radar" | "strike" | "pitch" | "pipeline" | "brag" | "prep">("radar");
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
   const [isPrepStudioOpen, setIsPrepStudioOpen] = useState<boolean>(false);
@@ -264,6 +269,13 @@ export default function Home() {
     (a) => (a.status === "HM DM Sent" || a.status === "Referred") && isPast72Hours(a.appliedDate)
   ).length;
 
+  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const currentDayName = daysOfWeek[new Date().getDay()];
+  const todayPrepTopic =
+    ROTATING_PREP_TOPICS.find((t) => t.dayOfWeek.toLowerCase() === currentDayName.toLowerCase()) ||
+    ROTATING_PREP_TOPICS[0];
+  const isTodayPrepCompleted = routineTasks.find((t) => t.id === "task-1-prep")?.completed ?? false;
+
   return (
     <main className="min-h-screen bg-[#0b0f19] text-slate-100 pb-16 selection:bg-emerald-500/30">
       {/* Toast Alert */}
@@ -306,9 +318,121 @@ export default function Home() {
               onToggleTask={handleToggleTask}
               onResetDay={handleResetDay}
               onNavigateTab={(tab) => setActiveTab(tab)}
-              onOpenPrepStudio={() => setIsPrepStudioOpen(true)}
+              onOpenPrepStudio={() => setActiveTab("prep")}
             />
           )}
+        </div>
+
+        {/* Today's Daily Deep Prep Spotlight Block */}
+        <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-950/25 via-slate-900 to-slate-900/90 p-4 sm:p-5 shadow-xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30 shadow-md">
+                <Code2 className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-white tracking-wide">
+                    Today&apos;s Deep Prep Target ({currentDayName})
+                  </span>
+                  <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-mono text-purple-300 font-bold border border-purple-500/30">
+                    08:30 – 09:15 AM IST
+                  </span>
+                  {isTodayPrepCompleted && (
+                    <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-mono text-emerald-400 font-bold border border-emerald-500/30">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Sprint Done
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-400">
+                  Targeted SDE-2 DSA problem & Distributed Systems architecture pattern for today.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab("prep")}
+                className="flex items-center gap-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold px-3.5 py-1.5 text-xs shadow-md shadow-purple-600/20 transition-all"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>Launch Prep Studio</span>
+              </button>
+              {!isTodayPrepCompleted && (
+                <button
+                  onClick={() => {
+                    handleToggleTask("task-1-prep");
+                    showToast("🔥 Daily Deep Prep marked complete! Sprint updated.");
+                  }}
+                  className="flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition-all"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>Mark Done</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 pt-2 border-t border-slate-800/80">
+            {/* Left: DSA Problem */}
+            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="font-semibold text-purple-300 flex items-center gap-1.5">
+                    <Code2 className="h-3.5 w-3.5 text-purple-400" />
+                    DSA: {todayPrepTopic.dsaTitle}
+                  </span>
+                  <span className="font-mono text-[10px] font-bold text-amber-400 border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.2 rounded">
+                    {todayPrepTopic.dsaDifficulty}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                  {todayPrepTopic.dsaKeyInsight}
+                </p>
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-800/50 flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 font-mono">Pattern: {todayPrepTopic.dsaPattern}</span>
+                <a
+                  href={todayPrepTopic.dsaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-purple-400 hover:text-purple-300 hover:underline flex items-center gap-1 font-medium"
+                >
+                  Solve on LeetCode <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            </div>
+
+            {/* Right: Distributed Systems */}
+            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="font-semibold text-emerald-300 flex items-center gap-1.5">
+                    <Cpu className="h-3.5 w-3.5 text-emerald-400" />
+                    Dist. System: {todayPrepTopic.distSysTitle}
+                  </span>
+                  <span className="font-mono text-[10px] text-slate-400 border border-slate-700 bg-slate-800 px-1.5 py-0.2 rounded">
+                    {todayPrepTopic.distSysCategory}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                  {todayPrepTopic.fidelityConnection}
+                </p>
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-800/50 flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 font-mono">Tier-1 SDE-2 Bar</span>
+                <a
+                  href={todayPrepTopic.distSysReadingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-emerald-400 hover:text-emerald-300 hover:underline flex items-center gap-1 font-medium"
+                >
+                  Read Material <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Tab Navigation Menu */}
@@ -346,7 +470,23 @@ export default function Home() {
               </span>
             </button>
 
-            {/* Tab 3: HM Pitch Studio */}
+            {/* Tab 3: Daily Deep Prep Studio */}
+            <button
+              onClick={() => setActiveTab("prep")}
+              className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+                activeTab === "prep"
+                  ? "border border-purple-500/40 bg-purple-500/10 text-purple-400 shadow-md shadow-purple-500/10"
+                  : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
+              }`}
+            >
+              <Code2 className="h-4 w-4 text-purple-400" />
+              <span>Daily Deep Prep</span>
+              <span className="rounded bg-purple-500/20 px-1.5 py-0.2 text-[9px] font-mono text-purple-300">
+                SDE-2
+              </span>
+            </button>
+
+            {/* Tab 4: HM Pitch Studio */}
             <button
               onClick={() => setActiveTab("pitch")}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
@@ -362,7 +502,7 @@ export default function Home() {
               </span>
             </button>
 
-            {/* Tab 4: Application Pipeline */}
+            {/* Tab 5: Application Pipeline */}
             <button
               onClick={() => setActiveTab("pipeline")}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
@@ -381,7 +521,7 @@ export default function Home() {
               )}
             </button>
 
-            {/* Tab 5: Interview Brag Sheet */}
+            {/* Tab 6: Interview Brag Sheet */}
             <button
               onClick={() => setActiveTab("brag")}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
@@ -412,6 +552,16 @@ export default function Home() {
           )}
 
           {activeTab === "strike" && <Past4HoursStrike />}
+
+          {activeTab === "prep" && (
+            <DeepPrepStudio
+              embedded={true}
+              onCompletePrep={() => {
+                handleToggleTask("task-1-prep");
+                showToast("🔥 Daily Deep Prep completed! Sprint progress updated.");
+              }}
+            />
+          )}
 
           {activeTab === "pitch" && (
             <PitchStudio
@@ -449,6 +599,7 @@ export default function Home() {
         onClose={() => setIsProfileOpen(false)}
         profile={profile}
         onSaveProfile={handleSaveProfile}
+        authUser={authUser}
       />
 
       {/* Daily Deep Prep Studio Modal */}

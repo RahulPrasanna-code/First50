@@ -1,5 +1,5 @@
 // First50 Service Worker
-const CACHE_NAME = "first50-v2";
+const CACHE_NAME = "first50-v3";
 const STATIC_ASSETS = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {

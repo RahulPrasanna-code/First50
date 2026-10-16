@@ -19,12 +19,13 @@ import {
 } from "lucide-react";
 
 interface DeepPrepStudioProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   onCompletePrep: () => void;
+  embedded?: boolean;
 }
 
-export function DeepPrepStudio({ isOpen, onClose, onCompletePrep }: DeepPrepStudioProps) {
+export function DeepPrepStudio({ isOpen, onClose, onCompletePrep, embedded = false }: DeepPrepStudioProps) {
   // Determine current day of week
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const currentDayIndex = new Date().getDay();
@@ -41,7 +42,7 @@ export function DeepPrepStudio({ isOpen, onClose, onCompletePrep }: DeepPrepStud
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [completedNotice, setCompletedNotice] = useState<boolean>(false);
 
-  if (!isOpen) return null;
+  if (!embedded && !isOpen) return null;
 
   const handleSelectDay = (dayName: string) => {
     setSelectedDay(dayName);
@@ -76,7 +77,7 @@ export function DeepPrepStudio({ isOpen, onClose, onCompletePrep }: DeepPrepStud
     setCompletedNotice(true);
     setTimeout(() => {
       setCompletedNotice(false);
-      onClose();
+      if (onClose && !embedded) onClose();
     }, 1200);
   };
 
@@ -91,37 +92,38 @@ export function DeepPrepStudio({ isOpen, onClose, onCompletePrep }: DeepPrepStud
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md overflow-y-auto">
-      <div className="glass-panel w-full max-w-4xl rounded-2xl p-6 border border-slate-700 shadow-2xl my-8 max-h-[92vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30">
-              <Code2 className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold text-white">
-                  Daily Deep Prep Studio
-                </h2>
-                <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-mono text-purple-300 font-bold border border-purple-500/20">
-                  08:30 – 09:15 AM
-                </span>
-              </div>
-              <p className="text-xs text-slate-400">
-                Curated DSA LeetCode targets + Distributed Systems patterns mapped to Tier-1 SDE-2 interview bars.
-              </p>
-            </div>
+  const content = (
+    <div className={`glass-panel w-full ${embedded ? "" : "max-w-4xl my-8 max-h-[92vh] overflow-y-auto"} rounded-2xl p-5 sm:p-6 border border-slate-700 shadow-2xl`}>
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30">
+            <Code2 className="h-5 w-5" />
           </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-white">
+                Daily Deep Prep Studio
+              </h2>
+              <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-mono text-purple-300 font-bold border border-purple-500/20">
+                08:30 – 09:15 AM
+              </span>
+            </div>
+            <p className="text-xs text-slate-400">
+              Curated DSA LeetCode targets + Distributed Systems patterns mapped to Tier-1 SDE-2 interview bars.
+            </p>
+          </div>
+        </div>
 
+        {onClose && !embedded && (
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
-        </div>
+        )}
+      </div>
 
         {/* Day Selector Pills */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
@@ -326,12 +328,14 @@ export function DeepPrepStudio({ isOpen, onClose, onCompletePrep }: DeepPrepStud
           )}
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={onClose}
-              className="rounded-xl px-4 py-2 text-xs font-medium text-slate-400 hover:text-white"
-            >
-              Close
-            </button>
+            {onClose && !embedded && (
+              <button
+                onClick={onClose}
+                className="rounded-xl px-4 py-2 text-xs font-medium text-slate-400 hover:text-white"
+              >
+                Close
+              </button>
+            )}
             <button
               onClick={handleMarkComplete}
               className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2 text-xs font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:from-emerald-500 hover:to-teal-500 transition-all"
@@ -341,7 +345,16 @@ export function DeepPrepStudio({ isOpen, onClose, onCompletePrep }: DeepPrepStud
             </button>
           </div>
         </div>
-      </div>
+    </div>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md overflow-y-auto">
+      {content}
     </div>
   );
 }

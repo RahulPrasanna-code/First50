@@ -19,7 +19,7 @@ interface DailyRoutineProps {
   tasks: DailyRoutineTask[];
   onToggleTask: (taskId: string) => void;
   onResetDay: () => void;
-  onNavigateTab: (tabId: "radar" | "strike" | "pitch" | "pipeline" | "brag") => void;
+  onNavigateTab: (tabId: "radar" | "strike" | "pitch" | "pipeline" | "brag" | "prep") => void;
   onOpenPrepStudio?: () => void;
 }
 
@@ -56,6 +56,7 @@ export function DailyRoutine({
     }
 
     if (task.category === "prep") {
+      onNavigateTab("prep");
       if (onOpenPrepStudio) onOpenPrepStudio();
     } else if (task.category === "office") {
       onNavigateTab("brag");

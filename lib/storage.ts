@@ -142,7 +142,12 @@ export async function getDailyRoutine(
       const ref = doc(db, "users", userId, "dailyRoutine", dateKey);
       const snap = await getDoc(ref);
       if (snap.exists() && snap.data()?.tasks) {
-        return snap.data().tasks as DailyRoutineTask[];
+        const firestoreTasks = snap.data().tasks as DailyRoutineTask[];
+        const merged = DEFAULT_DAILY_TASKS.map((defTask) => {
+          const existing = firestoreTasks.find((t) => t.id === defTask.id);
+          return existing ? { ...defTask, completed: existing.completed } : defTask;
+        });
+        return merged;
       }
     } catch (e) {
       console.warn("Firestore getDailyRoutine failed, fallback to local:", e);
@@ -151,7 +156,14 @@ export async function getDailyRoutine(
 
   const localTasks = getLocal<DailyRoutineTask[] | null>(localKey, null);
   if (localTasks && Array.isArray(localTasks) && localTasks.length > 0) {
-    return localTasks;
+    // Merge existing completion statuses with latest DEFAULT_DAILY_TASKS definitions
+    // so any new descriptions, titles, and action labels propagate immediately to active browsers
+    const merged = DEFAULT_DAILY_TASKS.map((defTask) => {
+      const existing = localTasks.find((t) => t.id === defTask.id);
+      return existing ? { ...defTask, completed: existing.completed } : defTask;
+    });
+    setLocal(localKey, merged);
+    return merged;
   }
 
   // Initialize with default tasks
