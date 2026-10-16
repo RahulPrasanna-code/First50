@@ -324,8 +324,8 @@ async function handleRadarScan(request: Request) {
     }
   }
 
-  // Ensure high-signal results even if ATS APIs are rate-limiting or offline
-  const finalJobs = scrapedJobs.length > 0 ? scrapedJobs : INITIAL_SCRAPED_JOBS;
+  // Real live-scraped jobs only
+  const finalJobs = scrapedJobs;
 
   // Sort by matchScore descending
   finalJobs.sort((a, b) => b.matchScore - a.matchScore);

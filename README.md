@@ -28,9 +28,11 @@ First50 reverses this dynamic through an automated, time-blocked protocol tailor
 ### 1. 📡 Automated 8:30 AM Morning Job Radar
 - Automatically polls unauthenticated public JSON endpoints from **Greenhouse** (`stripe`, `razorpay`, `postman`, `chargebee`, `rubrik`, `cloudflare`, `twilio`) and **Lever** (`cred`, `zeta`, `palantir`).
 - Filters for Chennai, Bengaluru, and India Backend/Distributed Systems roles.
-- Scores fit (0–100%) with **Google Gemini 2.5 Flash** against Rahul's exact 2.1B+ scale background.
+- Scores fit (0–100%) with **Google Gemini 3.8 Flash** against Rahul's exact 2.1B+ scale background.
 - Highlights missing ATS keywords and pre-generates tailored `<300`-character LinkedIn connection pitches.
 - Supported by a manual "Scan Live ATS Boards Now" button in the UI.
+
+> 🗺️ **Detailed Roadmap & Next Features:** See [ROADMAP.md](file:///Users/rahul/JobHunt/ROADMAP.md) for Chrome Extension sidecar, 1-page ATS resume generator, and Telegram morning alert specs.
 
 ### 2. ⚡ The 9:15 AM "Past 4 Hours" Strike Launcher
 - 1-click deep links leveraging LinkedIn's hidden `f_TPR=r14400` (Past 4 Hours) parameter to land in the first 50 applicants before recruiters log in at 10:00 AM.

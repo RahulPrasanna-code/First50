@@ -212,10 +212,14 @@ export function ApplicationTracker({
       {/* Applications Table / Cards */}
       <div className="space-y-3">
         {filteredApps.length === 0 ? (
-          <div className="glass-panel rounded-2xl p-8 text-center border border-slate-800">
-            <Layers className="mx-auto h-8 w-8 text-slate-600 mb-2" />
-            <p className="text-sm font-semibold text-slate-300">No applications in this category.</p>
-            <p className="text-xs text-slate-500 mt-1">Use "Log Application" above to add new tracks.</p>
+          <div className="glass-panel rounded-2xl p-10 text-center border border-slate-800">
+            <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-slate-800 text-slate-400 mb-3 border border-slate-700">
+              <Layers className="h-6 w-6 text-slate-400" />
+            </div>
+            <h3 className="text-base font-bold text-white">Application Pipeline is Empty</h3>
+            <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+              As you apply to roles or send HM pitches, click "Log Application" above or use "Save to Pipeline" from the Morning Radar or Pitch Studio. The 72-hour nudge radar will automatically track follow-up deadlines for you.
+            </p>
           </div>
         ) : (
           filteredApps.map((app) => {

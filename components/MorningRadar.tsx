@@ -174,10 +174,24 @@ export function MorningRadar({
       {/* Scraped Job Cards Grid */}
       <div className="grid gap-4 md:grid-cols-2">
         {filteredJobs.length === 0 ? (
-          <div className="glass-panel col-span-full rounded-2xl p-8 text-center border border-slate-800">
-            <Radar className="mx-auto h-10 w-10 text-slate-600 mb-2" />
-            <p className="text-sm font-semibold text-slate-300">No jobs match your current filter.</p>
-            <p className="text-xs text-slate-500 mt-1">Try switching to "All Locations" or run a fresh ATS scan.</p>
+          <div className="glass-panel col-span-full rounded-2xl p-10 text-center border border-slate-800">
+            <div className="flex h-14 w-14 mx-auto items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-3">
+              <Radar className={`h-7 w-7 ${isScanning ? "animate-spin text-emerald-300" : ""}`} />
+            </div>
+            <h3 className="text-base font-bold text-white">Radar Inbox is Clean</h3>
+            <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+              No jobs in your morning radar inbox. Click below to poll unauthenticated public Greenhouse & Lever boards for fresh Bengaluru & Chennai backend roles.
+            </p>
+            <div className="mt-4">
+              <button
+                onClick={onScanNow}
+                disabled={isScanning}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-xs font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:from-emerald-500 hover:to-teal-500 transition-all disabled:opacity-60"
+              >
+                <RefreshCw className={`h-4 w-4 ${isScanning ? "animate-spin" : ""}`} />
+                <span>{isScanning ? "Scanning Live ATS Boards..." : "Scan Live ATS Boards Now"}</span>
+              </button>
+            </div>
           </div>
         ) : (
           filteredJobs.map((job) => (

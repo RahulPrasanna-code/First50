@@ -26,9 +26,9 @@ export function PitchStudio({ profile, onSaveToPipeline }: PitchStudioProps) {
   const [activeTab, setActiveTab] = useState<"instant" | "analyzer">("instant");
 
   // Tab 1 state: Instant Template Pitch
-  const [recipientName, setRecipientName] = useState<string>("Arun");
-  const [targetCompany, setTargetCompany] = useState<string>("Stripe");
-  const [targetRoleId, setTargetRoleId] = useState<string>("SDE-2 Core Backend (#6192831)");
+  const [recipientName, setRecipientName] = useState<string>("");
+  const [targetCompany, setTargetCompany] = useState<string>("");
+  const [targetRoleId, setTargetRoleId] = useState<string>("");
   const [copiedInstant, setCopiedInstant] = useState<boolean>(false);
 
   // Generate dynamic template pitch
@@ -51,8 +51,8 @@ export function PitchStudio({ profile, onSaveToPipeline }: PitchStudioProps) {
   };
 
   // Tab 2 state: Gemini Deep JD Analyzer
-  const [jdCompany, setJdCompany] = useState<string>("Razorpay");
-  const [jdRoleTitle, setJdRoleTitle] = useState<string>("Software Development Engineer II - Core Payments");
+  const [jdCompany, setJdCompany] = useState<string>("");
+  const [jdRoleTitle, setJdRoleTitle] = useState<string>("");
   const [rawJdText, setRawJdText] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisResult, setAnalysisResult] = useState<JDAnalysisResult | null>(null);

@@ -52,9 +52,9 @@ export default function Home() {
   // Core Data State
   const [profile, setProfile] = useState<UserProfile>(SEED_PROFILE);
   const [streak, setStreak] = useState<UserStreak>({
-    currentStreak: 7,
-    lastCompletedDate: getTodayKeyIST(),
-    longestStreak: 12,
+    currentStreak: 1,
+    lastCompletedDate: "",
+    longestStreak: 1,
   });
   const [routineTasks, setRoutineTasks] = useState<DailyRoutineTask[]>([]);
   const [scrapedJobs, setScrapedJobs] = useState<ScrapedJob[]>([]);

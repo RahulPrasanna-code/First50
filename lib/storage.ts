@@ -90,9 +90,9 @@ export async function saveProfile(
 // 2. STREAK
 // ==========================================
 const DEFAULT_STREAK: UserStreak = {
-  currentStreak: 7,
-  lastCompletedDate: getTodayKeyIST(),
-  longestStreak: 12,
+  currentStreak: 1,
+  lastCompletedDate: "",
+  longestStreak: 1,
 };
 
 export async function getStreak(userId?: string | null): Promise<UserStreak> {
@@ -183,7 +183,9 @@ export async function getScrapedJobs(userId?: string | null): Promise<ScrapedJob
       const colRef = collection(db, "users", userId, "scrapedJobs");
       const snap = await getDocs(colRef);
       if (!snap.empty) {
-        return snap.docs.map((d) => d.data() as ScrapedJob);
+        return snap.docs
+          .map((d) => d.data() as ScrapedJob)
+          .filter((j) => !j.id.startsWith("job-seed-"));
       }
     } catch (e) {
       console.warn("Firestore getScrapedJobs failed, fallback to local:", e);
@@ -192,22 +194,28 @@ export async function getScrapedJobs(userId?: string | null): Promise<ScrapedJob
 
   const localJobs = getLocal<ScrapedJob[] | null>(STORAGE_KEYS.JOBS, null);
   if (localJobs && Array.isArray(localJobs)) {
-    return localJobs;
+    // Purge any legacy placeholder seed jobs
+    const cleaned = localJobs.filter((j) => !j.id.startsWith("job-seed-"));
+    if (cleaned.length !== localJobs.length) {
+      setLocal(STORAGE_KEYS.JOBS, cleaned);
+    }
+    return cleaned;
   }
 
-  setLocal(STORAGE_KEYS.JOBS, INITIAL_SCRAPED_JOBS);
-  return INITIAL_SCRAPED_JOBS;
+  setLocal(STORAGE_KEYS.JOBS, []);
+  return [];
 }
 
 export async function saveScrapedJobs(
   jobs: ScrapedJob[],
   userId?: string | null
 ): Promise<void> {
-  setLocal(STORAGE_KEYS.JOBS, jobs);
+  const cleaned = jobs.filter((j) => !j.id.startsWith("job-seed-"));
+  setLocal(STORAGE_KEYS.JOBS, cleaned);
 
   if (isFirebaseConfigured && db && userId) {
     try {
-      for (const job of jobs) {
+      for (const job of cleaned) {
         const ref = doc(db, "users", userId, "scrapedJobs", job.id);
         await setDoc(ref, job, { merge: true });
       }
@@ -239,7 +247,9 @@ export async function getApplications(userId?: string | null): Promise<Applicati
       const colRef = collection(db, "users", userId, "applications");
       const snap = await getDocs(colRef);
       if (!snap.empty) {
-        return snap.docs.map((d) => d.data() as Application);
+        return snap.docs
+          .map((d) => d.data() as Application)
+          .filter((a) => !a.id.startsWith("app-seed-"));
       }
     } catch (e) {
       console.warn("Firestore getApplications failed, fallback to local:", e);
@@ -248,11 +258,16 @@ export async function getApplications(userId?: string | null): Promise<Applicati
 
   const localApps = getLocal<Application[] | null>(STORAGE_KEYS.APPLICATIONS, null);
   if (localApps && Array.isArray(localApps)) {
-    return localApps;
+    // Purge any legacy placeholder seed applications (e.g. 72h Razorpay/Swiggy placeholders)
+    const cleaned = localApps.filter((a) => !a.id.startsWith("app-seed-"));
+    if (cleaned.length !== localApps.length) {
+      setLocal(STORAGE_KEYS.APPLICATIONS, cleaned);
+    }
+    return cleaned;
   }
 
-  setLocal(STORAGE_KEYS.APPLICATIONS, INITIAL_APPLICATIONS);
-  return INITIAL_APPLICATIONS;
+  setLocal(STORAGE_KEYS.APPLICATIONS, []);
+  return [];
 }
 
 export async function saveApplication(
