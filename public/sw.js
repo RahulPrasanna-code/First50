@@ -1,5 +1,5 @@
 // First50 Service Worker
-const CACHE_NAME = "first50-v1";
+const CACHE_NAME = "first50-v2";
 const STATIC_ASSETS = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -22,19 +22,30 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Network-First with Cache Fallback strategy
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET" || event.request.url.includes("/api/")) {
     return;
   }
+
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return (
-        cachedResponse ||
-        fetch(event.request).catch(() => {
-          return caches.match("/");
-        })
-      );
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        // Clone and store fresh copy in cache
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        // If offline, serve from cache
+        return caches.match(event.request).then((cachedResponse) => {
+          return cachedResponse || caches.match("/");
+        });
+      })
   );
 });
 
