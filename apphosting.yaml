@@ -1,0 +1,7 @@
+# Settings for Firebase App Hosting (Google's native Next.js 14 serverless platform)
+runConfig:
+  minInstances: 0
+  maxInstances: 2
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
