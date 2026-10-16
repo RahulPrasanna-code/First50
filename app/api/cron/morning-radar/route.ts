@@ -131,7 +131,7 @@ async function scoreWithGemini(
 } | null> {
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
 
     const prompt = `
 You are an expert technical recruiter evaluating a candidate for a backend engineering role.
