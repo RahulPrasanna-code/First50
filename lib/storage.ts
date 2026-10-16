@@ -21,6 +21,10 @@ import {
   INITIAL_APPLICATIONS,
   INITIAL_SCRAPED_JOBS,
   INITIAL_BRAG_ITEMS,
+  RAHUL_PRIVATE_PROFILE,
+  DEMO_GUEST_PROFILE,
+  RAHUL_PRIVATE_BRAG_ITEMS,
+  DEMO_GUEST_BRAG_ITEMS,
 } from "@/data/seed";
 import { getTodayKeyIST } from "./utils";
 
@@ -59,7 +63,10 @@ function setLocal<T>(key: string, value: T): void {
 // ==========================================
 // 1. PROFILE
 // ==========================================
-export async function getProfile(userId?: string | null): Promise<UserProfile> {
+export async function getProfile(
+  userId?: string | null,
+  userEmail?: string | null
+): Promise<UserProfile | null> {
   if (isFirebaseConfigured && db && userId) {
     try {
       const ref = doc(db, "users", userId);
@@ -67,11 +74,28 @@ export async function getProfile(userId?: string | null): Promise<UserProfile> {
       if (snap.exists() && snap.data()?.profile) {
         return snap.data().profile as UserProfile;
       }
+
+      // If user is Rahul Prasanna, automatically seed his private Fidelity profile
+      if (userEmail === "rahulprasannats@gmail.com") {
+        await setDoc(ref, { profile: RAHUL_PRIVATE_PROFILE }, { merge: true });
+        return RAHUL_PRIVATE_PROFILE;
+      }
+
+      // For any other new user, return null so onboarding wizard is triggered
+      return null;
     } catch (e) {
       console.warn("Firestore getProfile failed, fallback to local:", e);
     }
   }
-  return getLocal<UserProfile>(STORAGE_KEYS.PROFILE, SEED_PROFILE);
+
+  // Guest / Demo mode: Check if local profile is Rahul's old seed; if so, purge to protect privacy
+  const local = getLocal<UserProfile | null>(STORAGE_KEYS.PROFILE, null);
+  if (local && local.email === "rahulprasannats@gmail.com") {
+    setLocal(STORAGE_KEYS.PROFILE, DEMO_GUEST_PROFILE);
+    return DEMO_GUEST_PROFILE;
+  }
+
+  return local || DEMO_GUEST_PROFILE;
 }
 
 export async function saveProfile(
@@ -336,7 +360,10 @@ export async function deleteApplication(
 // ==========================================
 // 6. BRAG SHEET / PRODUCTION WINS
 // ==========================================
-export async function getBragSheet(userId?: string | null): Promise<BragItem[]> {
+export async function getBragSheet(
+  userId?: string | null,
+  userEmail?: string | null
+): Promise<BragItem[]> {
   if (isFirebaseConfigured && db && userId) {
     try {
       const colRef = collection(db, "users", userId, "bragSheet");
@@ -344,6 +371,18 @@ export async function getBragSheet(userId?: string | null): Promise<BragItem[]> 
       if (!snap.empty) {
         return snap.docs.map((d) => d.data() as BragItem);
       }
+
+      // If user is Rahul Prasanna, automatically seed his 5 private STAR stories
+      if (userEmail === "rahulprasannats@gmail.com") {
+        for (const item of RAHUL_PRIVATE_BRAG_ITEMS) {
+          const itemRef = doc(db, "users", userId, "bragSheet", item.id);
+          await setDoc(itemRef, item, { merge: true });
+        }
+        return RAHUL_PRIVATE_BRAG_ITEMS;
+      }
+
+      // For any other new user, return empty list
+      return [];
     } catch (e) {
       console.warn("Firestore getBragSheet failed, fallback to local:", e);
     }
@@ -351,11 +390,16 @@ export async function getBragSheet(userId?: string | null): Promise<BragItem[]> 
 
   const localBrag = getLocal<BragItem[] | null>(STORAGE_KEYS.BRAG_SHEET, null);
   if (localBrag && Array.isArray(localBrag) && localBrag.length > 0) {
+    // If local contains Rahul's private Fidelity items in guest mode, replace with demo items
+    if (!userId && localBrag.some((b) => b.id.includes("mrap") || b.metric.includes("2.1B+"))) {
+      setLocal(STORAGE_KEYS.BRAG_SHEET, DEMO_GUEST_BRAG_ITEMS);
+      return DEMO_GUEST_BRAG_ITEMS;
+    }
     return localBrag;
   }
 
-  setLocal(STORAGE_KEYS.BRAG_SHEET, INITIAL_BRAG_ITEMS);
-  return INITIAL_BRAG_ITEMS;
+  setLocal(STORAGE_KEYS.BRAG_SHEET, DEMO_GUEST_BRAG_ITEMS);
+  return DEMO_GUEST_BRAG_ITEMS;
 }
 
 export async function saveBragItem(

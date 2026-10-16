@@ -10,6 +10,9 @@ import { ApplicationTracker } from "@/components/ApplicationTracker";
 import { ProfileModal } from "@/components/ProfileModal";
 import { BragSheet } from "@/components/BragSheet";
 import { DeepPrepStudio } from "@/components/DeepPrepStudio";
+import { LandingPage } from "@/components/LandingPage";
+import { GuestBanner } from "@/components/GuestBanner";
+import { OnboardingModal } from "@/components/OnboardingModal";
 import {
   UserProfile,
   UserStreak,
@@ -37,7 +40,7 @@ import {
   deleteBragItem,
 } from "@/lib/storage";
 import { getTodayKeyIST, isPast72Hours } from "@/lib/utils";
-import { subscribeToAuth } from "@/lib/firebase";
+import { subscribeToAuth, signInWithGoogle } from "@/lib/firebase";
 import { User } from "firebase/auth";
 import { SEED_PROFILE, ROTATING_PREP_TOPICS } from "@/data/seed";
 import {
@@ -60,6 +63,10 @@ import {
 export default function Home() {
   const [mounted, setMounted] = useState<boolean>(false);
   const [authUser, setAuthUser] = useState<User | null>(null);
+
+  // View state: Landing Page vs Command Center App
+  const [viewMode, setViewMode] = useState<"landing" | "app">("landing");
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
 
   // Core Data State
   const [profile, setProfile] = useState<UserProfile>(SEED_PROFILE);
@@ -98,25 +105,33 @@ export default function Home() {
 
     const unsubscribe = subscribeToAuth((user) => {
       setAuthUser(user);
-      loadAllData(user ? user.uid : null);
+      if (user) {
+        setViewMode("app");
+      }
+      loadAllData(user ? user.uid : null, user ? user.email : null);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const loadAllData = async (userId?: string | null) => {
+  const loadAllData = async (userId?: string | null, userEmail?: string | null) => {
     const today = getTodayKeyIST();
     try {
       const [loadedProfile, loadedStreak, loadedTasks, loadedJobs, loadedApps, loadedBrag] = await Promise.all([
-        getProfile(userId),
+        getProfile(userId, userEmail),
         getStreak(userId),
         getDailyRoutine(today, userId),
         getScrapedJobs(userId),
         getApplications(userId),
-        getBragSheet(userId),
+        getBragSheet(userId, userEmail),
       ]);
 
-      setProfile(loadedProfile);
+      if (userId && !loadedProfile && userEmail !== "rahulprasannats@gmail.com") {
+        setIsOnboardingOpen(true);
+      } else if (loadedProfile) {
+        setProfile(loadedProfile);
+      }
+
       setStreak(loadedStreak);
       setRoutineTasks(loadedTasks);
       setScrapedJobs(loadedJobs);
@@ -124,6 +139,15 @@ export default function Home() {
       setBragItems(loadedBrag);
     } catch (e) {
       console.error("Error loading application data:", e);
+    }
+  };
+
+  const handleOnboardingComplete = async (newProfile: UserProfile) => {
+    setProfile(newProfile);
+    setIsOnboardingOpen(false);
+    if (authUser) {
+      await saveProfile(newProfile, authUser.uid);
+      showToast("🎉 Welcome to First50! Your personal command center is ready.");
     }
   };
 
@@ -276,8 +300,26 @@ export default function Home() {
     ROTATING_PREP_TOPICS[0];
   const isTodayPrepCompleted = routineTasks.find((t) => t.id === "task-1-prep")?.completed ?? false;
 
+  // Unauthenticated Visitor: Render Marketing Landing Page by default
+  if (viewMode === "landing" && !authUser) {
+    return (
+      <LandingPage
+        onExploreDemo={() => setViewMode("app")}
+        onSignIn={signInWithGoogle}
+      />
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#0b0f19] text-slate-100 pb-16 selection:bg-emerald-500/30">
+      {/* Guest Mode Demo Notice Banner (When exploring without signing in) */}
+      {!authUser && (
+        <GuestBanner
+          onSignIn={signInWithGoogle}
+          onBackToLanding={() => setViewMode("landing")}
+        />
+      )}
+
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-slate-900/95 px-4 py-3 text-xs font-bold text-emerald-400 shadow-2xl backdrop-blur-md transition-all animate-bounce">
@@ -611,6 +653,15 @@ export default function Home() {
           showToast("🔥 Daily Deep Prep completed! Sprint progress updated.");
         }}
       />
+
+      {/* First-Time User Onboarding Wizard Modal */}
+      {authUser && (
+        <OnboardingModal
+          isOpen={isOnboardingOpen}
+          authUser={authUser}
+          onComplete={handleOnboardingComplete}
+        />
+      )}
     </main>
   );
 }

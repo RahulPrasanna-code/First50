@@ -1,6 +1,10 @@
 import { UserProfile, DailyRoutineTask, Application, ScrapedJob, BragItem, DeepPrepTopic } from "@/types";
 
-export const SEED_PROFILE: UserProfile = {
+// ==========================================
+// 1. RAHUL'S PRIVATE PRODUCTION DATA
+// (Loaded ONLY when rahulprasannats@gmail.com signs in)
+// ==========================================
+export const RAHUL_PRIVATE_PROFILE: UserProfile = {
   name: "Rahul Prasanna T S",
   email: "rahulprasannats@gmail.com",
   currentRole: "Software Engineer",
@@ -49,6 +53,52 @@ export const SEED_PROFILE: UserProfile = {
     "Architected multi-region active-active backend pipeline on AWS Multi-Region Access Points (MRAP) with automatic cross-region failover, plus AI-assisted sidecar monitoring system."
   ]
 };
+
+// ==========================================
+// 2. SANITIZED PUBLIC DEMO GUEST PROFILE
+// (Loaded for anonymous visitors in Guest Preview Mode)
+// ==========================================
+export const DEMO_GUEST_PROFILE: UserProfile = {
+  name: "Alex Chen (Demo)",
+  email: "demo.engineer@first50.app",
+  currentRole: "Backend Software Engineer",
+  company: "High-Growth FinTech (Distributed Payments Platform)",
+  totalExperience: "3+ Years",
+  education: "B.Tech in Computer Science & Engineering",
+  shiftHours: "10:00 AM – 7:00 PM IST",
+  targetRoles: [
+    "SDE-2",
+    "Backend Software Engineer",
+    "Distributed Systems Engineer",
+    "Cloud Infrastructure Engineer"
+  ],
+  targetLocations: ["Bengaluru, India", "Hyderabad, India", "Remote"],
+  currentCompensation: "18 LPA Base",
+  targetCompensation: "28 to 45 LPA (Tier-1 Product, FinTechs, GCCs)",
+  skills: [
+    "Java 17/21",
+    "Go",
+    "Spring Boot",
+    "Distributed Systems",
+    "Kafka",
+    "PostgreSQL",
+    "Redis",
+    "AWS",
+    "Kubernetes",
+    "Docker",
+    "REST APIs",
+    "Microservices",
+    "CI/CD"
+  ],
+  achievements: [
+    "Architected an asynchronous event-driven payment processing pipeline handling 50M+ daily events with 99.99% availability.",
+    "Reduced p99 API latency from 450ms to 45ms by implementing a distributed multi-tier Redis caching topology with write-through invalidation.",
+    "Engineered a distributed rate limiter and circuit breaker using Redis token buckets, preventing downstream service cascades during peak flash-sales."
+  ]
+};
+
+// Default profile for fallback
+export const SEED_PROFILE: UserProfile = DEMO_GUEST_PROFILE;
 
 export const DEFAULT_DAILY_TASKS: DailyRoutineTask[] = [
   {
@@ -112,7 +162,7 @@ export const INITIAL_APPLICATIONS: Application[] = [];
 
 export const INITIAL_SCRAPED_JOBS: ScrapedJob[] = [];
 
-export const INITIAL_BRAG_ITEMS: BragItem[] = [
+export const RAHUL_PRIVATE_BRAG_ITEMS: BragItem[] = [
   {
     id: "brag-1-scale",
     title: "Communications Orchestration Platform Scale (2.1B+ Events)",
@@ -184,6 +234,54 @@ export const INITIAL_BRAG_ITEMS: BragItem[] = [
     dateAdded: "2026-10-10"
   }
 ];
+
+// Generic demo brag items for guest preview
+export const DEMO_GUEST_BRAG_ITEMS: BragItem[] = [
+  {
+    id: "demo-brag-1",
+    title: "Asynchronous Payment Processing Engine (50M+ Events/Day)",
+    category: "Scaling",
+    metric: "50M+ Daily Events & 99.99% Availability",
+    situation: "During peak transaction bursts, synchronous payment webhooks led to high database connection thread exhaustion and downstream gateway timeouts.",
+    task: "Re-architect payment ingestion pipeline to decouple synchronous checkout APIs from payment settlement workflows.",
+    action: "Engineered an event-driven architecture using Kafka clusters with idempotency keys and asynchronous worker pools in Java and Go, backed by Redis distributed locks.",
+    result: "Sustained 50M+ daily events with sub-200ms API response time, zero dropped transactions, and 99.99% system availability.",
+    starSummary: "When transaction bursts overwhelmed our synchronous payments gateway, I re-architected the pipeline into an event-driven Kafka consumer topology with idempotent deduplication, scaling capacity to 50M+ events daily with zero transaction loss.",
+    resumeBullet: "Architected an event-driven payment processing pipeline on Kafka and Redis handling 50M+ daily transactions with 99.99% availability.",
+    tags: ["Kafka", "Java", "Event-Driven", "High Scale", "Distributed Systems"],
+    dateAdded: "2026-09-01"
+  },
+  {
+    id: "demo-brag-2",
+    title: "Distributed Multi-Tier Caching (90% p99 Latency Reduction)",
+    category: "Performance",
+    metric: "90% Latency Drop (450ms -> 45ms)",
+    situation: "High-frequency merchant dashboard queries repeatedly hammered primary PostgreSQL read replicas, causing elevated p99 latency during morning reporting peaks.",
+    task: "Design a high-speed caching tier capable of servicing 85%+ of read traffic without serving stale settlement data.",
+    action: "Implemented a two-tier caching architecture with in-memory Caffeine local cache synchronized with a Redis cluster via Kafka pub/sub invalidation events.",
+    result: "Slashed p99 read query latency by 90% (from 450ms down to 45ms) and reduced database CPU utilization from 82% to 26%.",
+    starSummary: "To relieve database replica pressure during reporting spikes, I implemented a two-tier caching strategy with Caffeine and Redis cluster backed by pub/sub cache invalidation, cutting p99 read latency from 450ms to 45ms.",
+    resumeBullet: "Cut p99 read latency by 90% (to 45ms) and lowered database CPU load from 82% to 26% by engineering a multi-tier Redis and in-memory cache architecture.",
+    tags: ["Redis", "Caching", "PostgreSQL", "Latency Optimization", "Performance"],
+    dateAdded: "2026-09-20"
+  },
+  {
+    id: "demo-brag-3",
+    title: "Multi-Tenant Distributed Rate Limiter & Circuit Breaker",
+    category: "Resilience",
+    metric: "100% Prevention of Cascading Service Outages",
+    situation: "Sudden traffic surges from a rogue API client consumed downstream service pools, resulting in noisy-neighbor outages for other tenants.",
+    task: "Build a low-overhead, multi-tenant rate limiter capable of enforcing per-tenant quotas across 20+ microservice instances.",
+    action: "Built a distributed sliding-window rate limiter using Redis Lua scripts and integrated Resilience4j circuit breakers for graceful fallback degradation.",
+    result: "Enforced strict per-tenant fair-use quotas with <2ms latency overhead and prevented 100% of cascading outages during high-traffic sales events.",
+    starSummary: "To solve noisy-neighbor outages caused by rogue API traffic, I built a low-overhead distributed sliding-window rate limiter with Redis Lua scripts and circuit breakers, ensuring 100% fair-share isolation under load.",
+    resumeBullet: "Engineered a low-latency distributed rate limiter using Redis Lua scripts, eliminating cascading outages and guaranteeing multi-tenant isolation under traffic spikes.",
+    tags: ["Rate Limiter", "Resilience", "Redis Lua", "Circuit Breaker", "Microservices"],
+    dateAdded: "2026-10-05"
+  }
+];
+
+export const INITIAL_BRAG_ITEMS: BragItem[] = DEMO_GUEST_BRAG_ITEMS;
 
 export const ROTATING_PREP_TOPICS: DeepPrepTopic[] = [
   {
