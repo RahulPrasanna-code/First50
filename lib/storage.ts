@@ -13,12 +13,14 @@ import {
   DailyRoutineTask,
   Application,
   ScrapedJob,
+  BragItem,
 } from "@/types";
 import {
   SEED_PROFILE,
   DEFAULT_DAILY_TASKS,
   INITIAL_APPLICATIONS,
   INITIAL_SCRAPED_JOBS,
+  INITIAL_BRAG_ITEMS,
 } from "@/data/seed";
 import { getTodayKeyIST } from "./utils";
 
@@ -28,6 +30,7 @@ const STORAGE_KEYS = {
   ROUTINE_PREFIX: "first50_routine_",
   JOBS: "first50_scraped_jobs",
   APPLICATIONS: "first50_applications",
+  BRAG_SHEET: "first50_brag_sheet",
 };
 
 // Check if running on client
@@ -312,6 +315,79 @@ export async function deleteApplication(
       await deleteDoc(ref);
     } catch (e) {
       console.warn("Firestore deleteApplication failed:", e);
+    }
+  }
+
+  return updated;
+}
+
+// ==========================================
+// 6. BRAG SHEET / PRODUCTION WINS
+// ==========================================
+export async function getBragSheet(userId?: string | null): Promise<BragItem[]> {
+  if (isFirebaseConfigured && db && userId) {
+    try {
+      const colRef = collection(db, "users", userId, "bragSheet");
+      const snap = await getDocs(colRef);
+      if (!snap.empty) {
+        return snap.docs.map((d) => d.data() as BragItem);
+      }
+    } catch (e) {
+      console.warn("Firestore getBragSheet failed, fallback to local:", e);
+    }
+  }
+
+  const localBrag = getLocal<BragItem[] | null>(STORAGE_KEYS.BRAG_SHEET, null);
+  if (localBrag && Array.isArray(localBrag) && localBrag.length > 0) {
+    return localBrag;
+  }
+
+  setLocal(STORAGE_KEYS.BRAG_SHEET, INITIAL_BRAG_ITEMS);
+  return INITIAL_BRAG_ITEMS;
+}
+
+export async function saveBragItem(
+  item: BragItem,
+  userId?: string | null
+): Promise<BragItem[]> {
+  const current = await getBragSheet(userId);
+  const existingIdx = current.findIndex((b) => b.id === item.id);
+  let updated: BragItem[];
+  if (existingIdx >= 0) {
+    updated = [...current];
+    updated[existingIdx] = item;
+  } else {
+    updated = [item, ...current];
+  }
+
+  setLocal(STORAGE_KEYS.BRAG_SHEET, updated);
+
+  if (isFirebaseConfigured && db && userId) {
+    try {
+      const ref = doc(db, "users", userId, "bragSheet", item.id);
+      await setDoc(ref, item, { merge: true });
+    } catch (e) {
+      console.warn("Firestore saveBragItem failed:", e);
+    }
+  }
+
+  return updated;
+}
+
+export async function deleteBragItem(
+  itemId: string,
+  userId?: string | null
+): Promise<BragItem[]> {
+  const current = await getBragSheet(userId);
+  const updated = current.filter((b) => b.id !== itemId);
+  setLocal(STORAGE_KEYS.BRAG_SHEET, updated);
+
+  if (isFirebaseConfigured && db && userId) {
+    try {
+      const ref = doc(db, "users", userId, "bragSheet", itemId);
+      await deleteDoc(ref);
+    } catch (e) {
+      console.warn("Firestore deleteBragItem failed:", e);
     }
   }
 

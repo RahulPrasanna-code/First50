@@ -83,3 +83,35 @@ export interface JDAnalysisResult {
   linkedinPitch: string;
   coldEmail: string;
 }
+
+export interface BragItem {
+  id: string;
+  title: string;
+  category: "Scaling" | "Performance" | "Database" | "Resilience" | "Cloud Architecture";
+  metric: string;
+  situation: string;
+  task: string;
+  action: string;
+  result: string;
+  starSummary: string;
+  resumeBullet: string;
+  tags: string[];
+  dateAdded: string;
+}
+
+export interface DeepPrepTopic {
+  id: string;
+  dayOfWeek: string;
+  dsaTitle: string;
+  dsaDifficulty: "Easy" | "Medium" | "Hard";
+  dsaPattern: string;
+  dsaUrl: string;
+  dsaKeyInsight: string;
+  distSysTitle: string;
+  distSysCategory: string;
+  distSysReadingUrl: string;
+  distSysReadingTitle: string;
+  distSysSummary: string;
+  fidelityConnection: string;
+  interviewTip: string;
+}

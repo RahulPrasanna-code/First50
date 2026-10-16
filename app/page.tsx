@@ -8,6 +8,8 @@ import { Past4HoursStrike } from "@/components/Past4HoursStrike";
 import { PitchStudio } from "@/components/PitchStudio";
 import { ApplicationTracker } from "@/components/ApplicationTracker";
 import { ProfileModal } from "@/components/ProfileModal";
+import { BragSheet } from "@/components/BragSheet";
+import { DeepPrepStudio } from "@/components/DeepPrepStudio";
 import {
   UserProfile,
   UserStreak,
@@ -15,6 +17,7 @@ import {
   ScrapedJob,
   Application,
   ApplicationStatus,
+  BragItem,
 } from "@/types";
 import {
   getProfile,
@@ -29,6 +32,9 @@ import {
   getApplications,
   saveApplication,
   deleteApplication,
+  getBragSheet,
+  saveBragItem,
+  deleteBragItem,
 } from "@/lib/storage";
 import { getTodayKeyIST, isPast72Hours } from "@/lib/utils";
 import { subscribeToAuth } from "@/lib/firebase";
@@ -43,6 +49,7 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  Award,
 } from "lucide-react";
 
 export default function Home() {
@@ -59,11 +66,13 @@ export default function Home() {
   const [routineTasks, setRoutineTasks] = useState<DailyRoutineTask[]>([]);
   const [scrapedJobs, setScrapedJobs] = useState<ScrapedJob[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [bragItems, setBragItems] = useState<BragItem[]>([]);
 
   // UI State
-  const [activeTab, setActiveTab] = useState<"radar" | "strike" | "pitch" | "pipeline">("radar");
+  const [activeTab, setActiveTab] = useState<"radar" | "strike" | "pitch" | "pipeline" | "brag">("radar");
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
+  const [isPrepStudioOpen, setIsPrepStudioOpen] = useState<boolean>(false);
   const [isRoutineCollapsed, setIsRoutineCollapsed] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -93,12 +102,13 @@ export default function Home() {
   const loadAllData = async (userId?: string | null) => {
     const today = getTodayKeyIST();
     try {
-      const [loadedProfile, loadedStreak, loadedTasks, loadedJobs, loadedApps] = await Promise.all([
+      const [loadedProfile, loadedStreak, loadedTasks, loadedJobs, loadedApps, loadedBrag] = await Promise.all([
         getProfile(userId),
         getStreak(userId),
         getDailyRoutine(today, userId),
         getScrapedJobs(userId),
         getApplications(userId),
+        getBragSheet(userId),
       ]);
 
       setProfile(loadedProfile);
@@ -106,9 +116,22 @@ export default function Home() {
       setRoutineTasks(loadedTasks);
       setScrapedJobs(loadedJobs);
       setApplications(loadedApps);
+      setBragItems(loadedBrag);
     } catch (e) {
       console.error("Error loading application data:", e);
     }
+  };
+
+  const handleSaveBragItem = async (item: BragItem) => {
+    const updated = await saveBragItem(item, authUser?.uid);
+    setBragItems(updated);
+    showToast("STAR Production Story saved to Brag Sheet!");
+  };
+
+  const handleDeleteBragItem = async (id: string) => {
+    const updated = await deleteBragItem(id, authUser?.uid);
+    setBragItems(updated);
+    showToast("Story removed from Brag Sheet.");
   };
 
   // Routine task toggling
@@ -283,13 +306,14 @@ export default function Home() {
               onToggleTask={handleToggleTask}
               onResetDay={handleResetDay}
               onNavigateTab={(tab) => setActiveTab(tab)}
+              onOpenPrepStudio={() => setIsPrepStudioOpen(true)}
             />
           )}
         </div>
 
         {/* Tab Navigation Menu */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-2">
-          <nav className="flex space-x-1 sm:space-x-2">
+          <nav className="flex flex-wrap gap-1 sm:gap-2">
             {/* Tab 1: Morning Radar */}
             <button
               onClick={() => setActiveTab("radar")}
@@ -356,6 +380,22 @@ export default function Home() {
                 </span>
               )}
             </button>
+
+            {/* Tab 5: Interview Brag Sheet */}
+            <button
+              onClick={() => setActiveTab("brag")}
+              className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+                activeTab === "brag"
+                  ? "border border-amber-500/40 bg-amber-500/10 text-amber-400 shadow-md shadow-amber-500/10"
+                  : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
+              }`}
+            >
+              <Award className="h-4 w-4 text-amber-400" />
+              <span>Interview Brag Sheet</span>
+              <span className="rounded-full bg-slate-800 px-1.5 py-0.2 text-[10px] text-slate-400">
+                {bragItems.length}
+              </span>
+            </button>
           </nav>
         </div>
 
@@ -392,6 +432,14 @@ export default function Home() {
               onUpdateStatus={handleUpdateApplicationStatus}
             />
           )}
+
+          {activeTab === "brag" && (
+            <BragSheet
+              items={bragItems}
+              onSaveItem={handleSaveBragItem}
+              onDeleteItem={handleDeleteBragItem}
+            />
+          )}
         </section>
       </div>
 
@@ -401,6 +449,16 @@ export default function Home() {
         onClose={() => setIsProfileOpen(false)}
         profile={profile}
         onSaveProfile={handleSaveProfile}
+      />
+
+      {/* Daily Deep Prep Studio Modal */}
+      <DeepPrepStudio
+        isOpen={isPrepStudioOpen}
+        onClose={() => setIsPrepStudioOpen(false)}
+        onCompletePrep={() => {
+          handleToggleTask("task-1-prep");
+          showToast("🔥 Daily Deep Prep completed! Sprint progress updated.");
+        }}
       />
     </main>
   );

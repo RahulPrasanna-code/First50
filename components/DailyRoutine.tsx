@@ -19,7 +19,8 @@ interface DailyRoutineProps {
   tasks: DailyRoutineTask[];
   onToggleTask: (taskId: string) => void;
   onResetDay: () => void;
-  onNavigateTab: (tabId: "radar" | "strike" | "pitch" | "pipeline") => void;
+  onNavigateTab: (tabId: "radar" | "strike" | "pitch" | "pipeline" | "brag") => void;
+  onOpenPrepStudio?: () => void;
 }
 
 export function DailyRoutine({
@@ -27,6 +28,7 @@ export function DailyRoutine({
   onToggleTask,
   onResetDay,
   onNavigateTab,
+  onOpenPrepStudio,
 }: DailyRoutineProps) {
   const getTaskIcon = (category: DailyRoutineTask["category"]) => {
     switch (category) {
@@ -53,7 +55,11 @@ export function DailyRoutine({
       return;
     }
 
-    if (task.category === "strike") {
+    if (task.category === "prep") {
+      if (onOpenPrepStudio) onOpenPrepStudio();
+    } else if (task.category === "office") {
+      onNavigateTab("brag");
+    } else if (task.category === "strike") {
       onNavigateTab("strike");
     } else if (task.category === "dm") {
       onNavigateTab("pitch");

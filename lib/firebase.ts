@@ -43,8 +43,20 @@ export async function signInWithGoogle(): Promise<User | null> {
     return null;
   }
   const provider = new GoogleAuthProvider();
-  const result = await signInWithPopup(auth, provider);
-  return result.user;
+  try {
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (err: any) {
+    console.error("Firebase Sign-In Error:", err);
+    if (err.code === "auth/unauthorized-domain" && typeof window !== "undefined") {
+      alert(
+        `Firebase Auth Authorization Needed:\n\nPlease add "${window.location.hostname}" to Firebase Console:\nAuthentication > Settings > Authorized domains`
+      );
+    } else if (err.code !== "auth/popup-closed-by-user" && typeof window !== "undefined") {
+      alert(`Sign-in could not complete: ${err.message}`);
+    }
+    return null;
+  }
 }
 
 export async function signOutUser(): Promise<void> {
