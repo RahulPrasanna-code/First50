@@ -50,7 +50,7 @@ export function Past4HoursStrike() {
     },
     {
       title: "Instahyre Direct Match Opportunities",
-      desc: "Curated AI outbound opportunities matching your 2+ YoE and tech stack.",
+      desc: "Curated AI outbound opportunities matching your profile and target stack.",
       url: "https://www.instahyre.com/candidate/opportunities/?matching=true",
       tag: "Instahyre Radar",
     },

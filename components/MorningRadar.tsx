@@ -196,7 +196,7 @@ export function MorningRadar({
             </div>
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Radar Inbox is Clean</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-              No jobs in your morning radar inbox. Click below to poll unauthenticated public Greenhouse & Lever boards for fresh Bengaluru & Chennai backend roles.
+              No jobs in your morning radar inbox. Click below to poll unauthenticated public Greenhouse & Lever boards for fresh opportunities tailored to your profile.
             </p>
             <div className="mt-4">
               <button

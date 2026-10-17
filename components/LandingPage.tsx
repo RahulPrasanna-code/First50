@@ -126,15 +126,13 @@ export function LandingPage({ onExploreDemo, onSignIn }: LandingPageProps) {
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl text-slate-900 dark:text-slate-100">
             Bypass the 500+ Queue.{" "}
             <span className="block mt-1 bg-gradient-to-r from-brand-indigo via-purple-600 to-brand-cyan dark:from-brand-cyan dark:via-sky-400 dark:to-indigo-400 bg-clip-text text-transparent">
-              Land Top Software Engineer Offers.
+              Land Your Next Career Offer.
             </span>
           </h1>
 
           {/* Subtitle */}
           <p className="mx-auto max-w-2xl text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-            The automated career command center for working engineers targeting{" "}
-            <strong className="text-slate-900 dark:text-slate-100">₹22L–₹48L+</strong> roles in Bengaluru & Chennai.
-            Scrapes fresh ATS boards at 8:30 AM, launches 09:15 AM fast strikes, and tailors metric-backed pitches with inline proof diffs.
+            The intelligent career command center built to help anyone land faster. By asking the right questions, First50 personalizes your search, uncovers fresh opportunities before the crowd arrives, and structures a calm daily routine that turns job hunting into consistent progress.
           </p>
 
           {/* CTA Buttons */}
@@ -184,7 +182,7 @@ export function LandingPage({ onExploreDemo, onSignIn }: LandingPageProps) {
             </span>
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="h-4 w-4 text-brand-indigo dark:text-brand-cyan" />
-              Private Cloud Firestore Isolation
+              Tailored by Asking the Right Questions
             </span>
             <span className="flex items-center gap-1.5">
               <Flame className="h-4 w-4 text-amber-500" />
@@ -501,13 +499,13 @@ export function LandingPage({ onExploreDemo, onSignIn }: LandingPageProps) {
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 border-t border-hairline-light dark:border-hairline-dark">
         <div className="text-center mb-12 space-y-2">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 dark:border-cyan-500/30 bg-indigo-50 dark:bg-cyan-500/10 px-3 py-0.5 text-xs font-bold text-brand-indigo dark:text-brand-cyan font-mono">
-            ENGINEER PROTOCOL
+            CAREER ACCELERATION PROTOCOL
           </div>
           <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
             The Proven Shift Architecture (08:30 AM – 09:00 PM IST)
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-            Stop sending random midnight applications that get buried under 500 resumes. Strike when Indian recruiters log in at 09:45 AM.
+            Stop sending random midnight applications that get buried under 500 resumes. Strike early when recruiters log in and start reviewing their queue.
           </p>
         </div>
 
@@ -525,7 +523,7 @@ export function LandingPage({ onExploreDemo, onSignIn }: LandingPageProps) {
             </div>
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1.5">Daily Deep Prep Studio</h3>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Solve 1 targeted LeetCode problem + master 1 Distributed Systems pattern (Kafka consumer lag, Redlock, Cache Invalidation) before morning sprint meetings begin.
+              Target high-yield interview questions, technical concepts, and domain design patterns before your daily workday begins.
             </p>
           </div>
 
@@ -542,7 +540,7 @@ export function LandingPage({ onExploreDemo, onSignIn }: LandingPageProps) {
             </div>
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1.5">First-50 Fast Strike</h3>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Launch pre-configured hidden searches (<code className="text-brand-indigo dark:text-brand-cyan font-bold">f_TPR=r14400</code>) across Bengaluru & Chennai. Apply before roles hit 50 applicants for an 8x response rate.
+              Launch pre-configured early-bird searches (<code className="text-brand-indigo dark:text-brand-cyan font-bold">f_TPR=r14400</code>) tailored to your target locations. Apply before roles hit 50 applicants for an 8x response rate.
             </p>
           </div>
 
@@ -574,9 +572,9 @@ export function LandingPage({ onExploreDemo, onSignIn }: LandingPageProps) {
                 Outreach
               </span>
             </div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1.5">3 Direct EM Pitches</h3>
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1.5">3 Direct Outreach Pitches</h3>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Send personalized 75-word pitches directly to Engineering Managers before applying on company portals. Cite exact metrics and production wins.
+              Send concise, personalized pitches directly to decision-makers and hiring managers before applying on portals. Lead with proof of impact.
             </p>
           </div>
 
@@ -685,10 +683,10 @@ export function LandingPage({ onExploreDemo, onSignIn }: LandingPageProps) {
             <LogoIcon className="h-12 w-12" />
           </div>
           <h2 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 sm:text-4xl tracking-tight">
-            Start Landing High-Velocity Engineering Interviews.
+            Start Landing High-Velocity Career Offers.
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-            Build your private job radar, track your follow-up pipeline, and master daily deep prep without giving up your day job.
+            Personalize your target criteria, track your follow-up pipeline, and master daily preparation without giving up your day job.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <button
