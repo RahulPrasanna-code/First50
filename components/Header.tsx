@@ -5,6 +5,7 @@ import { formatISTDate, formatISTTime } from "@/lib/utils";
 import { UserProfile, UserStreak } from "@/types";
 import { User } from "firebase/auth";
 import { useTheme } from "@/lib/ThemeContext";
+import { LogoIcon } from "@/components/Logo";
 import {
   Flame,
   Bell,
@@ -94,9 +95,7 @@ export function Header({
         
         {/* Left: Brand Mark & Steady Sprint Badge (NO BLINKING) */}
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-indigo dark:bg-brand-cyan font-black text-sm text-white dark:text-slate-950 shadow-md">
-            50
-          </div>
+          <LogoIcon className="h-9 w-9 shrink-0" />
 
           <div>
             <div className="flex items-center gap-2">
