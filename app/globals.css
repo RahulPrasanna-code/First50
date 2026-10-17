@@ -3,8 +3,47 @@
 @tailwind utilities;
 
 :root {
-  --background: #0b0f19;
-  --foreground: #f8fafc;
+  /* Luminous Electric Indigo Light Mode Tokens (Zero Muddy Greys) */
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-border: #E0E7FF;
+  --subcard: #F5F3FF;
+  --primary: #4F46E5;
+  --primary-hover: #4338CA;
+  --primary-light: #EEF2FF;
+  --primary-border: #C7D2FE;
+  --accent: #7C3AED;
+  --accent-light: #F5F3FF;
+  --accent-border: #DDD6FE;
+  --muted-text: #64748B;
+  --chip-bg: #EEF2FF;
+  --chip-text: #3730A3;
+  --streak-bg: #FFFBEB;
+  --streak-border: #FDE68A;
+  --streak-text: #D97706;
+}
+
+.dark {
+  /* Nordic Ocean & Arctic Cyan Dark Mode Tokens */
+  --background: #060C16;
+  --foreground: #F0F9FF;
+  --card: #0C1728;
+  --card-border: #162844;
+  --subcard: #070E1A;
+  --primary: #06B6D4;
+  --primary-hover: #0891B2;
+  --primary-light: rgba(6, 182, 212, 0.12);
+  --primary-border: rgba(6, 182, 212, 0.35);
+  --accent: #38BDF8;
+  --accent-light: rgba(56, 189, 248, 0.12);
+  --accent-border: rgba(56, 189, 248, 0.35);
+  --muted-text: #94A3B8;
+  --chip-bg: #070E1A;
+  --chip-text: #94A3B8;
+  --streak-bg: #0C1728;
+  --streak-border: #162844;
+  --streak-text: #FBBF24;
 }
 
 body {
@@ -13,6 +52,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
+  transition: background-color 0.22s ease, color 0.18s ease;
 }
 
 /* Custom engineering scrollbars */
@@ -22,60 +62,50 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b0f19;
+  background: var(--background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 3px;
+  background: var(--card-border);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--primary);
 }
 
-/* Glassmorphism utility */
-.glass-panel {
-  background: rgba(18, 24, 38, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(51, 65, 85, 0.4);
+/* Safe Area insets for mobile web notches */
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
-.glass-panel-hover {
-  transition: all 0.2s ease-in-out;
+.safe-top {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
 }
 
-.glass-panel-hover:hover {
-  border-color: rgba(16, 185, 129, 0.4);
-  box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.15);
+/* Inline Match Diff Chips for Explainable AI */
+.diff-req {
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  color: #0284C7;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  font-weight: 600;
 }
 
-/* Cyber emerald accents */
-.emerald-glow {
-  box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.4);
+.dark .diff-req {
+  color: #38BDF8;
 }
 
-.amber-glow {
-  box-shadow: 0 0 20px -5px rgba(245, 158, 11, 0.35);
+.diff-proof {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #059669;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  font-weight: 600;
 }
 
-/* Pulse animation for live indicators */
-@keyframes radar-pulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-  }
-}
-
-.radar-ping {
-  animation: radar-pulse 2s infinite;
+.dark .diff-proof {
+  color: #34D399;
 }

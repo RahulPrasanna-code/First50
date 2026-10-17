@@ -10,21 +10,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0b0f19",
-        surface: "rgba(30, 41, 59, 0.7)",
-        "surface-border": "rgba(51, 65, 85, 0.6)",
-        emerald: {
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          200: '#a7f3d0',
-          300: '#6ee7b7',
-          400: '#34d399',
-          500: '#10b981',
-          600: '#059669',
-          700: '#047857',
-          800: '#065f46',
-          900: '#064e3b',
-          950: '#022c22',
+        // Semantic Theme Tokens
+        canvas: {
+          light: "#F8FAFC",
+          dark: "#060C16",
+        },
+        surface: {
+          light: "#FFFFFF",
+          dark: "#0C1728",
+        },
+        subsurface: {
+          light: "#F5F3FF",
+          dark: "#070E1A",
+        },
+        hairline: {
+          light: "#E0E7FF",
+          dark: "#162844",
+        },
+        // Sealed Primary: Indigo (Light) / Arctic Cyan (Dark)
+        brand: {
+          cyan: "#06B6D4",
+          indigo: "#4F46E5",
+          violet: "#7C3AED",
+          sky: "#38BDF8",
         },
       },
       fontFamily: {

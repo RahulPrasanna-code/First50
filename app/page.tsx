@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
+import { DesktopNav } from "@/components/DesktopNav";
+import { MobileDock } from "@/components/MobileDock";
+import { QuickCaptureModal } from "@/components/QuickCaptureModal";
 import { DailyRoutine } from "@/components/DailyRoutine";
 import { MorningRadar } from "@/components/MorningRadar";
 import { Past4HoursStrike } from "@/components/Past4HoursStrike";
@@ -67,6 +70,8 @@ export default function Home() {
   // View state: Landing Page vs Command Center App
   const [viewMode, setViewMode] = useState<"landing" | "app">("landing");
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
+  const [energyLevel, setEnergyLevel] = useState<"high" | "med" | "low">("high");
+  const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState<boolean>(false);
 
   // Core Data State
   const [profile, setProfile] = useState<UserProfile>(SEED_PROFILE);
@@ -182,7 +187,7 @@ export default function Home() {
       };
       setStreak(newStreak);
       await updateStreak(newStreak, authUser?.uid);
-      showToast("🎉 Perfect sprint! All 6 daily tasks completed. Streak increased!");
+      showToast("🎉 Perfect sprint! All daily tasks completed. Streak increased!");
     }
   };
 
@@ -282,7 +287,7 @@ export default function Home() {
 
   if (!mounted) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0b0f19] text-emerald-400 font-mono text-sm">
+      <div className="flex h-screen items-center justify-center bg-canvas-light dark:bg-canvas-dark text-brand-indigo dark:text-brand-cyan font-mono text-sm">
         Initializing First50 Command Center...
       </div>
     );
@@ -311,7 +316,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0b0f19] text-slate-100 pb-16 selection:bg-emerald-500/30">
+    <main className="min-h-screen bg-canvas-light dark:bg-canvas-dark text-slate-900 dark:text-slate-100 pb-28 md:pb-16 selection:bg-brand-indigo/20 dark:selection:bg-cyan-500/20 transition-colors duration-200">
       {/* Guest Mode Demo Notice Banner (When exploring without signing in) */}
       {!authUser && (
         <GuestBanner
@@ -322,7 +327,7 @@ export default function Home() {
 
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-slate-900/95 px-4 py-3 text-xs font-bold text-emerald-400 shadow-2xl backdrop-blur-md transition-all animate-bounce">
+        <div className="fixed bottom-20 md:bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl border border-indigo-200 dark:border-cyan-500/40 bg-white/95 dark:bg-[#0C1728]/95 px-4 py-3 text-xs font-bold text-brand-indigo dark:text-brand-cyan shadow-xl backdrop-blur-md transition-all">
           <Sparkles className="h-4 w-4" />
           <span>{toastMessage}</span>
         </div>
@@ -336,18 +341,31 @@ export default function Home() {
         totalTasksCount={routineTasks.length}
         onOpenProfile={() => setIsProfileOpen(true)}
         authUser={authUser}
+        onOpenQuickCapture={() => setIsQuickCaptureOpen(true)}
+        energyLevel={energyLevel}
+        onEnergyChange={setEnergyLevel}
+      />
+
+      {/* Top Segmented Desktop Navigation Bar (md:flex, hidden on mobile) */}
+      <DesktopNav
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab)}
+        radarCount={scrapedJobs.length}
+        pipelineCount={applications.length}
+        bragCount={bragItems.length}
+        followUpDueCount={followUpDueCount}
       />
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-6">
         {/* Daily Routine Collapse / Expand Bar */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Shift Architecture (08:30 AM – 09:00 PM IST)
             </span>
             <button
               onClick={() => setIsRoutineCollapsed(!isRoutineCollapsed)}
-              className="flex items-center gap-1 text-xs text-slate-400 hover:text-white"
+              className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition"
             >
               <span>{isRoutineCollapsed ? "Show Daily Routine" : "Hide Checklist"}</span>
               {isRoutineCollapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
@@ -361,33 +379,35 @@ export default function Home() {
               onResetDay={handleResetDay}
               onNavigateTab={(tab) => setActiveTab(tab)}
               onOpenPrepStudio={() => setActiveTab("prep")}
+              energyLevel={energyLevel}
+              onEnergyChange={setEnergyLevel}
             />
           )}
         </div>
 
         {/* Today's Daily Deep Prep Spotlight Block */}
-        <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-950/25 via-slate-900 to-slate-900/90 p-4 sm:p-5 shadow-xl">
+        <div className="rounded-2xl border border-indigo-200 dark:border-cyan-500/30 bg-surface-light dark:bg-surface-dark p-5 shadow-xs transition-colors">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30 shadow-md">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 dark:bg-cyan-500/10 text-brand-indigo dark:text-brand-cyan border border-indigo-200 dark:border-cyan-500/30 shadow-2xs">
                 <Code2 className="h-5 w-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-white tracking-wide">
+                  <span className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                     Today&apos;s Deep Prep Target ({currentDayName})
                   </span>
-                  <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-mono text-purple-300 font-bold border border-purple-500/30">
+                  <span className="rounded-full bg-indigo-50 dark:bg-cyan-500/10 px-2 py-0.5 text-[10px] font-mono text-brand-indigo dark:text-brand-cyan font-bold border border-indigo-200 dark:border-cyan-500/30">
                     08:30 – 09:15 AM IST
                   </span>
                   {isTodayPrepCompleted && (
-                    <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-mono text-emerald-400 font-bold border border-emerald-500/30">
+                    <span className="flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-[10px] font-mono text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-500/30">
                       <CheckCircle2 className="h-3 w-3" />
                       Sprint Done
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Targeted SDE-2 DSA problem & Distributed Systems architecture pattern for today.
                 </p>
               </div>
@@ -396,7 +416,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveTab("prep")}
-                className="flex items-center gap-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold px-3.5 py-1.5 text-xs shadow-md shadow-purple-600/20 transition-all"
+                className="flex items-center gap-1.5 rounded-xl bg-brand-indigo dark:bg-brand-cyan text-white dark:text-slate-950 font-bold px-3.5 py-1.5 text-xs shadow-xs hover:opacity-95 transition"
               >
                 <BookOpen className="h-3.5 w-3.5" />
                 <span>Launch Prep Studio</span>
@@ -407,7 +427,7 @@ export default function Home() {
                     handleToggleTask("task-1-prep");
                     showToast("🔥 Daily Deep Prep marked complete! Sprint updated.");
                   }}
-                  className="flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition-all"
+                  className="flex items-center gap-1.5 rounded-xl border border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/10 px-3.5 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition"
                 >
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   <span>Mark Done</span>
@@ -416,30 +436,30 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2 pt-2 border-t border-slate-800/80">
+          <div className="grid gap-3 md:grid-cols-2 pt-3 border-t border-hairline-light dark:border-hairline-dark">
             {/* Left: DSA Problem */}
-            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 flex flex-col justify-between">
+            <div className="rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-3.5 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="font-semibold text-purple-300 flex items-center gap-1.5">
-                    <Code2 className="h-3.5 w-3.5 text-purple-400" />
+                  <span className="font-semibold text-brand-indigo dark:text-brand-cyan flex items-center gap-1.5">
+                    <Code2 className="h-3.5 w-3.5" />
                     DSA: {todayPrepTopic.dsaTitle}
                   </span>
-                  <span className="font-mono text-[10px] font-bold text-amber-400 border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.2 rounded">
+                  <span className="font-mono text-[10px] font-bold text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded">
                     {todayPrepTopic.dsaDifficulty}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
                   {todayPrepTopic.dsaKeyInsight}
                 </p>
               </div>
-              <div className="mt-2 pt-2 border-t border-slate-800/50 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 font-mono">Pattern: {todayPrepTopic.dsaPattern}</span>
+              <div className="mt-2.5 pt-2 border-t border-hairline-light dark:border-hairline-dark flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 dark:text-slate-400 font-mono">Pattern: {todayPrepTopic.dsaPattern}</span>
                 <a
                   href={todayPrepTopic.dsaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-purple-400 hover:text-purple-300 hover:underline flex items-center gap-1 font-medium"
+                  className="text-brand-indigo dark:text-brand-cyan hover:underline flex items-center gap-1 font-semibold"
                 >
                   Solve on LeetCode <ExternalLink className="h-3 w-3" />
                 </a>
@@ -447,138 +467,34 @@ export default function Home() {
             </div>
 
             {/* Right: Distributed Systems */}
-            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 flex flex-col justify-between">
+            <div className="rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-3.5 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="font-semibold text-emerald-300 flex items-center gap-1.5">
-                    <Cpu className="h-3.5 w-3.5 text-emerald-400" />
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                    <Cpu className="h-3.5 w-3.5" />
                     Dist. System: {todayPrepTopic.distSysTitle}
                   </span>
-                  <span className="font-mono text-[10px] text-slate-400 border border-slate-700 bg-slate-800 px-1.5 py-0.2 rounded">
+                  <span className="font-mono text-[10px] text-slate-700 dark:text-slate-300 border border-hairline-light dark:border-hairline-dark bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded">
                     {todayPrepTopic.distSysCategory}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
                   {todayPrepTopic.fidelityConnection}
                 </p>
               </div>
-              <div className="mt-2 pt-2 border-t border-slate-800/50 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 font-mono">Tier-1 SDE-2 Bar</span>
+              <div className="mt-2.5 pt-2 border-t border-hairline-light dark:border-hairline-dark flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 dark:text-slate-400 font-mono">Tier-1 SDE-2 Bar</span>
                 <a
                   href={todayPrepTopic.distSysReadingUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-emerald-400 hover:text-emerald-300 hover:underline flex items-center gap-1 font-medium"
+                  className="text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1 font-semibold"
                 >
                   Read Material <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Tab Navigation Menu */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-2">
-          <nav className="flex flex-wrap gap-1 sm:gap-2">
-            {/* Tab 1: Morning Radar */}
-            <button
-              onClick={() => setActiveTab("radar")}
-              className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
-                activeTab === "radar"
-                  ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 shadow-md shadow-emerald-500/10"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-              }`}
-            >
-              <Radar className="h-4 w-4" />
-              <span>Morning Job Radar</span>
-              <span className="rounded-full bg-slate-800 px-1.5 py-0.2 text-[10px] text-slate-400">
-                {scrapedJobs.length}
-              </span>
-            </button>
-
-            {/* Tab 2: 9:15 AM Past 4 Hours Strike */}
-            <button
-              onClick={() => setActiveTab("strike")}
-              className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
-                activeTab === "strike"
-                  ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 shadow-md shadow-emerald-500/10"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-              }`}
-            >
-              <Zap className="h-4 w-4" />
-              <span>9:15 AM Fast Strike</span>
-              <span className="rounded bg-emerald-500/20 px-1.5 py-0.2 text-[9px] font-mono text-emerald-300">
-                f_TPR
-              </span>
-            </button>
-
-            {/* Tab 3: Daily Deep Prep Studio */}
-            <button
-              onClick={() => setActiveTab("prep")}
-              className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
-                activeTab === "prep"
-                  ? "border border-purple-500/40 bg-purple-500/10 text-purple-400 shadow-md shadow-purple-500/10"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-              }`}
-            >
-              <Code2 className="h-4 w-4 text-purple-400" />
-              <span>Daily Deep Prep</span>
-              <span className="rounded bg-purple-500/20 px-1.5 py-0.2 text-[9px] font-mono text-purple-300">
-                SDE-2
-              </span>
-            </button>
-
-            {/* Tab 4: HM Pitch Studio */}
-            <button
-              onClick={() => setActiveTab("pitch")}
-              className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
-                activeTab === "pitch"
-                  ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 shadow-md shadow-emerald-500/10"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-              }`}
-            >
-              <Send className="h-4 w-4" />
-              <span>HM Pitch Studio</span>
-              <span className="rounded bg-purple-500/20 px-1.5 py-0.2 text-[9px] font-mono text-purple-300">
-                AI
-              </span>
-            </button>
-
-            {/* Tab 5: Application Pipeline */}
-            <button
-              onClick={() => setActiveTab("pipeline")}
-              className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
-                activeTab === "pipeline"
-                  ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 shadow-md shadow-emerald-500/10"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-              }`}
-            >
-              <Layers className="h-4 w-4" />
-              <span>72h Pipeline Tracker</span>
-              {followUpDueCount > 0 && (
-                <span className="flex items-center gap-0.5 rounded-full bg-amber-500/20 px-1.5 py-0.2 text-[10px] font-bold text-amber-400 border border-amber-500/40">
-                  <AlertTriangle className="h-2.5 w-2.5" />
-                  {followUpDueCount}
-                </span>
-              )}
-            </button>
-
-            {/* Tab 6: Interview Brag Sheet */}
-            <button
-              onClick={() => setActiveTab("brag")}
-              className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
-                activeTab === "brag"
-                  ? "border border-amber-500/40 bg-amber-500/10 text-amber-400 shadow-md shadow-amber-500/10"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-              }`}
-            >
-              <Award className="h-4 w-4 text-amber-400" />
-              <span>Interview Brag Sheet</span>
-              <span className="rounded-full bg-slate-800 px-1.5 py-0.2 text-[10px] text-slate-400">
-                {bragItems.length}
-              </span>
-            </button>
-          </nav>
         </div>
 
         {/* Tab Contents */}
@@ -622,6 +538,7 @@ export default function Home() {
               }}
               onDeleteApplication={handleDeleteApplication}
               onUpdateStatus={handleUpdateApplicationStatus}
+              onShowToast={showToast}
             />
           )}
 
@@ -662,6 +579,19 @@ export default function Home() {
           onComplete={handleOnboardingComplete}
         />
       )}
+
+      {/* Mobile Navigation Bottom Dock (strictly md:hidden for mobile phone browser) */}
+      <MobileDock
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab)}
+        onOpenProfile={() => setIsProfileOpen(true)}
+      />
+
+      {/* 1-Click Quick-Capture Modal */}
+      <QuickCaptureModal
+        isOpen={isQuickCaptureOpen}
+        onClose={() => setIsQuickCaptureOpen(false)}
+      />
     </main>
   );
 }

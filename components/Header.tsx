@@ -3,16 +3,16 @@
 import React, { useState, useEffect } from "react";
 import { formatISTDate, formatISTTime } from "@/lib/utils";
 import { UserProfile, UserStreak } from "@/types";
-import { signInWithGoogle, signOutUser, isFirebaseConfigured } from "@/lib/firebase";
 import { User } from "firebase/auth";
+import { useTheme } from "@/lib/ThemeContext";
 import {
   Flame,
   Bell,
   BellRing,
   User as UserIcon,
-  ShieldCheck,
-  Clock,
-  Sparkles,
+  Sun,
+  Moon,
+  Bookmark,
   Zap,
 } from "lucide-react";
 
@@ -24,6 +24,9 @@ interface HeaderProps {
   onOpenProfile: () => void;
   authUser: User | null;
   onAuthChange?: (user: User | null) => void;
+  onOpenQuickCapture?: () => void;
+  energyLevel?: "high" | "med" | "low";
+  onEnergyChange?: (level: "high" | "med" | "low") => void;
 }
 
 export function Header({
@@ -33,7 +36,11 @@ export function Header({
   totalTasksCount,
   onOpenProfile,
   authUser,
+  onOpenQuickCapture,
+  energyLevel = "high",
+  onEnergyChange,
 }: HeaderProps) {
+  const { theme, toggleTheme } = useTheme();
   const [currentTime, setCurrentTime] = useState<string>("");
   const [currentDate, setCurrentDate] = useState<string>("");
   const [currentHour, setCurrentHour] = useState<number>(9);
@@ -45,7 +52,6 @@ export function Header({
       setCurrentTime(formatISTTime(now));
       setCurrentDate(formatISTDate(now));
 
-      // Get IST hour
       const istHours = new Intl.DateTimeFormat("en-US", {
         timeZone: "Asia/Kolkata",
         hour: "numeric",
@@ -70,8 +76,8 @@ export function Header({
       const permission = await Notification.requestPermission();
       setNotificationsGranted(permission === "granted");
       if (permission === "granted") {
-        new Notification("⚡ First50 Radar Active", {
-          body: "Push alerts enabled for 8:30 AM ATS discovery and 72-hour follow-ups.",
+        new Notification("First50 Radar Active", {
+          body: "Push alerts enabled for 09:15 AM strike and 72-hour follow-ups.",
           icon: "/icons/icon-192.png",
         });
       }
@@ -80,112 +86,109 @@ export function Header({
 
   const isMorningSprint = currentHour >= 8 && currentHour < 11;
   const isOfficeShift = currentHour >= 11 && currentHour < 20;
-
   const progressPercent = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        {/* Left: Brand & Sprint Status */}
+    <header className="sticky top-0 z-40 w-full border-b border-hairline-light dark:border-hairline-dark bg-white/95 dark:bg-[#091220]/95 backdrop-blur-md transition-colors">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-8">
+        
+        {/* Left: Brand Mark & Steady Sprint Badge (NO BLINKING) */}
         <div className="flex items-center gap-3">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 font-mono text-lg font-black text-slate-950 shadow-lg shadow-emerald-500/20">
-            F50
-            <span className="absolute -right-1 -top-1 flex h-3 w-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
-            </span>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-indigo dark:bg-brand-cyan font-black text-sm text-white dark:text-slate-950 shadow-md">
+            50
           </div>
 
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-extrabold tracking-tight text-white">
-                First<span className="text-emerald-400">50</span>
+              <h1 className="text-base font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+                First<span className="text-brand-indigo dark:text-brand-cyan">50</span>
               </h1>
-              <span className="hidden text-xs text-slate-400 sm:inline">|</span>
-              <span className="hidden text-xs font-medium text-slate-400 sm:inline">
-                Job Hunt Command Center
+              
+              {/* Steady Status Pill */}
+              <span className="flex items-center gap-1.5 rounded-full border border-indigo-200 dark:border-cyan-500/30 bg-indigo-50 dark:bg-cyan-500/10 px-2.5 py-0.5 text-xs font-semibold text-brand-indigo dark:text-brand-cyan">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-indigo dark:bg-brand-cyan"></span>
+                {isMorningSprint ? "09:15 AM SPRINT" : isOfficeShift ? "OFFICE FOCUS" : "EVENING TRIAGE"}
               </span>
             </div>
-
-            {/* Time-sensitive dynamic sprint status */}
-            <div className="flex items-center gap-2 text-xs">
-              {isMorningSprint ? (
-                <span className="flex items-center gap-1.5 font-semibold text-emerald-400">
-                  <Zap className="h-3 w-3 animate-pulse" />
-                  PRIME MORNING SPRINT (08:30 – 10:30 AM IST)
-                </span>
-              ) : isOfficeShift ? (
-                <span className="flex items-center gap-1.5 font-medium text-blue-400">
-                  <Clock className="h-3 w-3" />
-                  CORE OFFICE SHIFT (11:00 AM – 08:00 PM IST)
-                </span>
-              ) : (
-                <span className="flex items-center gap-1.5 font-medium text-amber-400">
-                  <Sparkles className="h-3 w-3" />
-                  EVENING PIPELINE TRIAGE & PREP
-                </span>
-              )}
-            </div>
+            
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
+              Minimalist Career Command Center · {currentTime || "09:15 AM IST"}
+            </p>
           </div>
         </div>
 
-        {/* Center: Live Clock & Progress */}
-        <div className="flex items-center gap-6">
-          {/* IST Clock */}
-          <div className="hidden rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-1.5 text-center md:block">
-            <div className="font-mono text-xs font-bold text-emerald-400 tracking-wider">
-              {currentTime || "08:30:00 AM IST"}
-            </div>
-            <div className="text-[10px] text-slate-400 font-medium">{currentDate}</div>
+        {/* Center: Energy Level Switcher (Luminous Light Mode, no dull greys) */}
+        {onEnergyChange && (
+          <div className="hidden lg:flex items-center gap-1 rounded-xl border border-hairline-light dark:border-hairline-dark bg-white dark:bg-[#070E1A] p-1 text-xs shadow-2xs">
+            <span className="px-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">Energy:</span>
+            <button
+              onClick={() => onEnergyChange("high")}
+              className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                energyLevel === "high"
+                  ? "bg-brand-indigo dark:bg-brand-cyan text-white dark:text-slate-950 shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+              title="Full 6-Task Daily Shift Protocol"
+            >
+              ⚡ High (6)
+            </button>
+            <button
+              onClick={() => onEnergyChange("med")}
+              className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                energyLevel === "med"
+                  ? "bg-brand-indigo dark:bg-brand-cyan text-white dark:text-slate-950 shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+              title="Core 3 Tasks Only (Strike, Naukri, Pitch)"
+            >
+              🔋 Med (3)
+            </button>
+            <button
+              onClick={() => onEnergyChange("low")}
+              className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                energyLevel === "low"
+                  ? "bg-amber-500 text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+              title="Zero-Guilt Minimum (1 High-ROI Action)"
+            >
+              🪫 Low (1)
+            </button>
           </div>
+        )}
 
-          {/* Daily Progress */}
-          <div className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-1.5">
-            <div className="text-right">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Daily Sprint
-              </div>
-              <div className="font-mono text-xs font-bold text-white">
-                {completedTasksCount}/{totalTasksCount} ({progressPercent}%)
-              </div>
-            </div>
-            <div className="h-2 w-16 overflow-hidden rounded-full bg-slate-800">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 ease-out"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
+        {/* Right: Discrete Quick Capture, Streak, Theme Toggle, Profile */}
+        <div className="flex items-center gap-2.5">
+          
+          {/* Discrete Quick-Capture Tool Button (Fix for Bookmarklet) */}
+          {onOpenQuickCapture && (
+            <button
+              onClick={onOpenQuickCapture}
+              className="flex items-center gap-1.5 rounded-xl border border-indigo-200 dark:border-cyan-500/30 bg-indigo-50/80 dark:bg-cyan-500/10 px-2.5 py-1.5 text-xs font-semibold text-brand-indigo dark:text-brand-cyan hover:bg-indigo-100 dark:hover:bg-cyan-500/20 transition shadow-2xs active:scale-95"
+              title="1-Click Quick-Capture tool for LinkedIn and Instahyre"
+            >
+              <Bookmark className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Quick Capture</span>
+            </button>
+          )}
 
           {/* Streak Counter */}
-          <div className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-amber-400">
-            <Flame className="h-4 w-4 fill-amber-400" />
-            <span className="font-mono text-xs font-bold">{streak.currentStreak}d Streak</span>
+          <div className="flex items-center gap-1.5 rounded-full border border-amber-200 dark:border-slate-800 bg-amber-50 dark:bg-slate-900 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-400 shadow-2xs">
+            <Flame className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+            <span className="font-mono">{streak.currentStreak}d Streak</span>
           </div>
-        </div>
 
-        {/* Right: Actions, Push Permission & User Profile */}
-        <div className="flex items-center gap-2">
-          {/* Notification Button */}
+          {/* Theme Switcher Toggle (Sun / Moon) */}
           <button
-            onClick={handleRequestNotification}
-            title={notificationsGranted ? "Radar notifications enabled" : "Enable morning radar push notifications"}
-            className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-medium transition-colors ${
-              notificationsGranted
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                : "border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600 hover:bg-slate-700"
-            }`}
+            onClick={toggleTheme}
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-hairline-light dark:border-hairline-dark bg-white dark:bg-[#0C1728] text-slate-700 dark:text-slate-300 hover:text-brand-indigo dark:hover:text-brand-cyan transition shadow-2xs active:scale-95"
+            title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+            aria-label="Toggle theme"
           >
-            {notificationsGranted ? (
-              <>
-                <BellRing className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Alerts On</span>
-              </>
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" />
             ) : (
-              <>
-                <Bell className="h-3.5 w-3.5 text-slate-400" />
-                <span className="hidden sm:inline">Enable Push</span>
-              </>
+              <Moon className="h-4 w-4" />
             )}
           </button>
 
@@ -193,46 +196,38 @@ export function Header({
           {authUser ? (
             <button
               onClick={onOpenProfile}
-              title="Open Profile & Sync Settings"
-              className="flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-slate-900/90 px-3 py-1.5 text-xs font-medium text-slate-200 transition-all hover:border-emerald-500 hover:bg-slate-800"
+              title="Open Profile & Settings"
+              className="flex items-center gap-2 rounded-xl border border-indigo-200 dark:border-cyan-500/30 bg-indigo-50/50 dark:bg-[#0C1728] px-2.5 py-1 text-xs font-medium text-slate-800 dark:text-slate-200 transition hover:border-brand-indigo dark:hover:border-brand-cyan"
             >
-              <div className="relative flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold overflow-hidden">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-indigo/15 dark:bg-brand-cyan/20 text-brand-indigo dark:text-brand-cyan font-bold text-xs overflow-hidden">
                 {authUser.photoURL ? (
-                  <img src={authUser.photoURL} alt="User" className="h-6 w-6 object-cover" />
+                  <img src={authUser.photoURL} alt="User" className="h-7 w-7 object-cover" />
                 ) : (
                   <span>{authUser.displayName?.charAt(0) || "R"}</span>
                 )}
-                <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-400 border border-slate-900"></span>
               </div>
-              <div className="hidden text-left sm:block">
-                <div className="font-semibold leading-tight text-white max-w-[130px] truncate">
+              <div className="hidden text-left md:block">
+                <div className="font-semibold leading-tight text-slate-900 dark:text-slate-100 max-w-[110px] truncate">
                   {authUser.displayName || profile.name}
                 </div>
-                <div className="text-[10px] text-emerald-400 font-mono">
-                  Cloud Synced
+                <div className="text-[10px] text-brand-indigo dark:text-brand-cyan font-mono">
+                  Synced
                 </div>
               </div>
             </button>
           ) : (
             <button
               onClick={onOpenProfile}
-              title="Open Profile & Cloud Sync"
-              className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/90 px-3 py-1.5 text-xs font-medium text-slate-200 hover:border-slate-600 hover:bg-slate-700 transition-all"
+              title="Sign in with Google"
+              className="flex items-center gap-2 rounded-xl border border-hairline-light dark:border-hairline-dark bg-white dark:bg-[#0C1728] px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:border-brand-indigo dark:hover:border-brand-cyan transition"
             >
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-700 text-slate-300">
-                <UserIcon className="h-3.5 w-3.5" />
-              </div>
-              <div className="hidden text-left sm:block">
-                <div className="font-semibold leading-tight text-white">
-                  {profile.name.split(" ")[0]}
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono">
-                  Profile & Sync
-                </div>
-              </div>
+              <UserIcon className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Sign In</span>
             </button>
           )}
+
         </div>
+
       </div>
     </header>
   );

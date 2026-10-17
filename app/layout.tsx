@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { ThemeProvider } from "@/lib/ThemeContext";
 
 export const metadata: Metadata = {
-  title: "First50 - AI Job Hunt Command Center",
-  description: "AI-Powered Morning Job Radar & First-50 Application Strike Command Center",
+  title: "First50 - Modern Career Command Center",
+  description: "Minimalist AI-Powered Career Command Center & SDE-2 Application Strike Platform",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -17,10 +18,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#10b981",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#060C16" },
+    { media: "(prefers-color-scheme: light)", color: "#4F46E5" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -29,9 +34,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-[#0b0f19] text-slate-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-300">
-        {children}
+    <html lang="en" suppressHydrationWarning className="dark">
+      <body className="antialiased min-h-screen">
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

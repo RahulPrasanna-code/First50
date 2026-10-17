@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>First50 - Modern Career Command Center (Refined Prototype)</title>
+  <!-- Tailwind CSS via allowlisted CDN -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    /* Smooth CSS Transitions for Theme & Layout (Zero twitchy animations) */
+    *, *::before, *::after {
+      transition: background-color 0.22s ease, border-color 0.22s ease, color 0.18s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+    }
+    
+    /* Custom Minimal Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 4px; }
+
+    /* Phone Device Frame (for Desktop Simulation Mode) */
+    .phone-simulator-frame {
+      max-width: 412px !important;
+      border: 12px solid #1E293B;
+      border-radius: 48px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      margin: 1.5rem auto;
+      overflow: hidden;
+      min-height: 860px;
+    }
+
+    /* Safe Area insets for modern mobile notched displays */
+    .safe-bottom {
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+    .safe-top {
+      padding-top: max(0.75rem, env(safe-area-inset-top));
+    }
+
+    /* Diff highlight chips in Pitch Modal */
+    .diff-req {
+      background: rgba(14, 165, 233, 0.15);
+      border: 1px solid rgba(14, 165, 233, 0.35);
+      color: #0284C7;
+      padding: 0.1rem 0.35rem;
+      border-radius: 0.25rem;
+      font-weight: 600;
+    }
+    .dark .diff-req {
+      color: #38BDF8;
+    }
+    .diff-proof {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #059669;
+      padding: 0.1rem 0.35rem;
+      border-radius: 0.25rem;
+      font-weight: 600;
+    }
+    .dark .diff-proof {
+      color: #34D399;
+    }
+  </style>
+</head>
+<body id="appBody" class="min-h-screen antialiased flex flex-col font-sans selection:bg-indigo-500/20 selection:text-indigo-600 dark:selection:bg-cyan-500/20 dark:selection:text-cyan-400">
+
+  <!-- ================= TOP EVALUATION CONTROL BAR ================= -->
+  <!-- Designed for reviewers to test themes and viewport modes without resizing window -->
+  <aside id="evalBar" class="sticky top-0 z-50 border-b px-4 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-3 text-xs select-none shadow-xs">
+    <div class="flex items-center gap-2">
+      <!-- Steady calm status indicator (NO BLINKING) -->
+      <span class="w-2 h-2 rounded-full" id="evalDot"></span>
+      <span class="font-bold" id="evalBrand">First50 Career Command Center</span>
+      <span class="opacity-40 hidden md:inline">|</span>
+      <span class="opacity-70 hidden md:inline" id="evalThemeTag">Luminous Electric Indigo Light Mode</span>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <!-- Device Viewport Simulation -->
+      <div class="flex items-center rounded-lg p-0.5 border" id="viewportSwitchBox">
+        <button onclick="setViewport('desktop')" id="btnDesk" class="px-2.5 py-1 rounded-md font-semibold flex items-center gap-1.5 transition">
+          <span>🖥️</span> <span class="hidden sm:inline">Desktop</span>
+        </button>
+        <button onclick="setViewport('mobile')" id="btnMob" class="px-2.5 py-1 rounded-md font-medium flex items-center gap-1.5 transition opacity-70 hover:opacity-100">
+          <span>📱</span> <span class="hidden sm:inline">Mobile Frame</span>
+        </button>
+      </div>
+
+      <!-- Theme Switcher Pill -->
+      <button onclick="toggleTheme()" class="flex items-center gap-1.5 px-3 py-1 rounded-lg border font-semibold shadow-xs transition active:scale-95" id="themeBtn">
+        <span id="themeIcon">☀️</span>
+        <span id="themeLabel">Light Mode</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ================= SIMULATOR CONTAINER WRAPPER ================= -->
+  <div id="deviceWrapper" class="flex-1 w-full flex flex-col">
+
+    <!-- ================= REVISED CLEAN NAVBAR ================= -->
+    <header id="topNav" class="border-b px-4 sm:px-8 py-3.5 flex items-center justify-between sticky top-9 z-40 backdrop-blur-md">
+      <div class="flex items-center gap-4">
+        <!-- Logo Mark -->
+        <div id="logoMark" class="w-8 h-8 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-md">
+          50
+        </div>
+        <div class="flex items-center gap-2.5">
+          <span class="font-bold text-base tracking-tight" id="logoText">First50</span>
+          <!-- Steady Calm Status Badge (NO BLINKING) -->
+          <span id="sprintBadge" class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border">
+            <span class="w-2 h-2 rounded-full" id="sprintDot"></span>
+            09:15 AM SPRINT
+          </span>
+        </div>
+      </div>
+
+      <!-- Right Header Actions: Bookmarklet Tool + Energy Toggle + Streak + Profile -->
+      <div class="flex items-center gap-3">
+        
+        <!-- Discrete Quick-Capture Tool Button (Fix for Bookmarklet: Clean, on-demand, not permanent clutter) -->
+        <button onclick="openBookmarkletModal()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition shadow-2xs hover:shadow-xs active:scale-95" id="btnCaptureTool" title="1-Click Capture jobs from LinkedIn/Instahyre">
+          <span>📌</span>
+          <span class="hidden sm:inline">Quick Capture</span>
+        </button>
+
+        <!-- Energy Level Quick Indicator (Luminous in Light mode, no dull grey) -->
+        <div class="hidden sm:flex items-center gap-1 p-0.5 rounded-lg border text-xs" id="energyNavPill">
+          <button onclick="setEnergy('high')" id="btnEnergyHigh" class="px-2.5 py-1 rounded-md font-bold transition" title="Full 6-Task Daily Protocol">⚡ High</button>
+          <button onclick="setEnergy('med')" id="btnEnergyMed" class="px-2.5 py-1 rounded-md opacity-60 hover:opacity-100 transition" title="Core 3 Tasks Only">🔋 Med</button>
+          <button onclick="setEnergy('low')" id="btnEnergyLow" class="px-2.5 py-1 rounded-md opacity-60 hover:opacity-100 transition" title="Zero Guilt Minimum (1 High-ROI Action)">🪫 Low</button>
+        </div>
+
+        <!-- Streak Badge -->
+        <div id="streakPill" class="flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold">
+          <span>🔥</span> 14 Days
+        </div>
+
+        <!-- Profile Avatar -->
+        <div id="avatarBadge" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs cursor-pointer border shadow-2xs" title="Rahul Prasanna · SDE-2">
+          RP
+        </div>
+      </div>
+    </header>
+
+    <!-- ================= DESKTOP TOP NAVIGATION TABS (Visible only on Desktop md: and above) ================= -->
+    <!-- Solves Desktop Navigation: Clean, natural horizontal scan, NO BOTTOM NAVBAR on desktop! -->
+    <nav class="hidden md:flex items-center justify-between border-b px-8 py-2 text-xs" id="desktopNavStrip">
+      <div class="flex items-center gap-1.5">
+        <button class="px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition shadow-2xs" id="dTabRadar">
+          <span>🎯</span> Morning Radar (Top 10)
+        </button>
+        <button class="px-3 py-1.5 rounded-lg font-medium opacity-70 hover:opacity-100 flex items-center gap-1.5 transition" id="dTabStrike">
+          <span>⚡</span> 9:15 AM Strike Queue (5)
+        </button>
+        <button class="px-3 py-1.5 rounded-lg font-medium opacity-70 hover:opacity-100 flex items-center gap-1.5 transition" id="dTabPrep">
+          <span>🧠</span> 45m Deep Prep
+        </button>
+        <button class="px-3 py-1.5 rounded-lg font-medium opacity-70 hover:opacity-100 flex items-center gap-1.5 transition" id="dTabPitches">
+          <span>✉️</span> Recruiter Pitches
+        </button>
+        <button class="px-3 py-1.5 rounded-lg font-medium opacity-70 hover:opacity-100 flex items-center gap-1.5 transition" id="dTabPipeline">
+          <span>⏳</span> 72h Pipeline (3)
+        </button>
+        <button class="px-3 py-1.5 rounded-lg font-medium opacity-70 hover:opacity-100 flex items-center gap-1.5 transition" id="dTabBrag">
+          <span>🏆</span> STAR Brag Sheet
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 text-[11px] opacity-75">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        <span>Auto-synced with Indian Standard Time</span>
+      </div>
+    </nav>
+
+    <!-- ================= WORK PLAN ASSIST BANNER ================= -->
+    <div id="assistBanner" class="border-b px-4 sm:px-8 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+      <div class="flex items-center gap-2.5">
+        <div id="assistIconBox" class="w-5 h-5 rounded-md flex items-center justify-center font-bold text-xs shrink-0">
+          ✦
+        </div>
+        <div>
+          <span class="font-bold">Today's Mission:</span>
+          <span class="opacity-85 ml-1" id="assistMessage">You are in the <strong id="highlightPhase">09:15 AM First Strike Window</strong>. 2 of 5 targeted applications logged.</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 self-end sm:self-auto">
+        <span class="text-[11px] opacity-75" id="assistSubMessage">Next Shift in <strong id="countdownText">31 mins</strong> (Naukri Algorithm Refresh)</span>
+      </div>
+    </div>
+
+    <!-- ================= MAIN WORKSPACE CANVAS ================= -->
+    <main class="max-w-6xl w-full mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1 pb-24 md:pb-12" id="mainContent">
+
+      <!-- ================= 1. EXECUTIVE KPI SUMMARY STRIP ================= -->
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4" aria-label="Key Performance Indicators">
+        
+        <!-- KPI 1 -->
+        <div class="card p-4 rounded-2xl border shadow-xs flex flex-col justify-between">
+          <div class="flex items-center justify-between text-xs opacity-75">
+            <span>Today's Strikes</span>
+            <span class="font-semibold text-emerald-500">Goal: 5</span>
+          </div>
+          <div class="text-2xl font-black mt-1" id="kpiStrike">
+            2 <span class="text-xs font-normal opacity-70">/ 5 Sent</span>
+          </div>
+          <div class="w-full h-1.5 rounded-full mt-2.5 overflow-hidden" id="kpiTrack1">
+            <div class="h-full w-[40%]" id="kpiBar1"></div>
+          </div>
+        </div>
+
+        <!-- KPI 2 (72h Escalation & Rejection Telemetry) -->
+        <div class="card p-4 rounded-2xl border shadow-xs flex flex-col justify-between" id="kpiCardEscalation">
+          <div class="flex items-center justify-between text-xs opacity-75">
+            <span>72h Escalation</span>
+            <span class="font-semibold text-rose-500" id="kpiEscalateLabel">Follow-up Due</span>
+          </div>
+          <div class="text-2xl font-black mt-1 text-rose-500" id="kpiEscalateCount">
+            3 <span class="text-xs font-normal opacity-70">Pending Leads</span>
+          </div>
+          <div class="text-[11px] opacity-70 mt-2 flex items-center justify-between">
+            <span id="kpiEscalateList">Zepto, Groww, PhonePe</span>
+            <button onclick="scrollToEscalations()" class="font-semibold hover:underline">Review →</button>
+          </div>
+        </div>
+
+        <!-- KPI 3 -->
+        <div class="card p-4 rounded-2xl border shadow-xs flex flex-col justify-between">
+          <div class="flex items-center justify-between text-xs opacity-75">
+            <span>Average Match Score</span>
+            <span class="font-semibold" id="kpiMatchSub">Tier-1 Fit</span>
+          </div>
+          <div class="text-2xl font-black mt-1" id="kpiMatch">94.5%</div>
+          <div class="text-[11px] opacity-70 mt-2">Bangalore SDE-2 Alignment</div>
+        </div>
+
+        <!-- KPI 4 -->
+        <div class="card p-4 rounded-2xl border shadow-xs flex flex-col justify-between">
+          <div class="flex items-center justify-between text-xs opacity-75">
+            <span>Weekly Resilience Quota</span>
+            <span class="font-mono text-xs font-bold text-amber-500" id="kpiQuota">18 / 25</span>
+          </div>
+          <div class="text-2xl font-black mt-1" id="kpiQuotaTitle">Active Sprint</div>
+          <div class="text-[11px] opacity-70 mt-2">Rejections count as telemetry ✓</div>
+        </div>
+
+      </section>
+
+      <!-- ================= 2. TWO-COLUMN RESPONSIVE WORKSPACE ================= -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+
+        <!-- LEFT COLUMN (70% on desktop / 100% on mobile): Deep Prep Drill + Instahyre Feed -->
+        <section class="lg:col-span-8 space-y-6">
+
+          <!-- 45m SDE-2 Deep Prep Card -->
+          <div class="card p-5 sm:p-6 rounded-2xl border shadow-xs transition-all" id="prepCard">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b" id="prepBorder">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold shadow-xs shrink-0" id="prepIconBox">🧠</span>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-bold">Today's 45m SDE-2 Deep Prep Focus</h3>
+                    <span id="lowEnergyBadge" class="hidden text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/15 text-amber-600 border border-amber-500/30">Optional Today</span>
+                  </div>
+                  <p class="text-xs opacity-75">High-frequency topics asked in Swiggy & Razorpay SDE-2 rounds</p>
+                </div>
+              </div>
+              <button onclick="toggleTimer()" class="self-start sm:self-auto flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold border transition shadow-xs active:scale-95" id="prepTimerBtn">
+                <span>▶</span> <span id="timerDisplay">45:00</span>
+              </button>
+            </div>
+
+            <!-- Two Topic Drills -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-4" id="prepDrillsGrid">
+              <!-- Topic 1: DSA Drill -->
+              <div class="subcard p-4 rounded-xl border transition" id="dsaBox">
+                <div class="flex items-center justify-between text-xs font-bold" id="dsaTitle">
+                  <span>1. LeetCode #146: LRU Cache</span>
+                  <span class="font-mono text-[10px] px-2 py-0.5 rounded border" id="dsaBadge">Medium · 25m</span>
+                </div>
+                <p class="text-xs opacity-80 mt-1.5 leading-relaxed">
+                  Hash Map + Doubly Linked List with O(1) Get/Put. Practice memory footprint & thread-safe eviction edge cases.
+                </p>
+                <div class="mt-3 pt-2.5 border-t flex items-center justify-between text-xs" id="dsaFoot">
+                  <span class="opacity-60 font-mono text-[11px]">LeetCode #146</span>
+                  <a href="https://leetcode.com/problems/lru-cache/" target="_blank" rel="noopener noreferrer" class="font-semibold hover:underline" id="dsaLink">Open Problem →</a>
+                </div>
+              </div>
+
+              <!-- Topic 2: System Design Drill -->
+              <div class="subcard p-4 rounded-xl border transition" id="sysBox">
+                <div class="flex items-center justify-between text-xs font-bold" id="sysTitle">
+                  <span>2. Architecture: Kafka Rebalancing</span>
+                  <span class="font-mono text-[10px] px-2 py-0.5 rounded border" id="sysBadge">Architecture · 20m</span>
+                </div>
+                <p class="text-xs opacity-80 mt-1.5 leading-relaxed">
+                  Cooperative Sticky Assignor vs Eager Rebalance. Mitigate partition lag & stop-the-world spikes during broker restarts.
+                </p>
+                <div class="mt-3 pt-2.5 border-t flex items-center justify-between text-xs" id="sysFoot">
+                  <span class="opacity-60 font-mono text-[11px]">Fidelity STAR #2</span>
+                  <button onclick="copyFidelityStar()" class="font-semibold hover:underline" id="sysLink">Copy STAR Note →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Instahyre Curated Match Opportunities Section -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider opacity-80">High-Match Opportunity Feed</h2>
+                <p class="text-xs opacity-60">Verified compensation & direct recruiter outreach</p>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-full border" id="curatedBadge">2 Ready for Strike</span>
+            </div>
+
+            <!-- JOB CARD 1: Swiggy -->
+            <div class="card p-5 sm:p-6 rounded-2xl border shadow-xs transition hover:shadow-md" id="jobCard1">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div class="flex items-start gap-3.5">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-base shrink-0 shadow-xs" id="logoSwiggy">
+                    SW
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <h3 class="text-base font-bold">Swiggy</h3>
+                      <span class="text-xs opacity-70">• Bangalore (Hybrid / Bellandur)</span>
+                      <span class="px-2.5 py-0.5 text-xs font-mono font-bold rounded-lg border" id="salarySwiggy">
+                        ₹34L - ₹44L
+                      </span>
+                    </div>
+                    <div class="text-xs font-semibold opacity-90 mt-1">
+                      Software Development Engineer II (Platform & Real-time Tracking)
+                    </div>
+                    
+                    <!-- Instahyre Tech Chips (Luminous in Light mode, no dull grey) -->
+                    <div class="flex flex-wrap gap-1.5 mt-3">
+                      <span class="tech-chip px-2.5 py-0.5 rounded-lg text-xs font-medium border">Java 17 / Go</span>
+                      <span class="tech-chip px-2.5 py-0.5 rounded-lg text-xs font-medium border">Kafka Stream Processing</span>
+                      <span class="tech-chip px-2.5 py-0.5 rounded-lg text-xs font-medium border">Redis Cluster</span>
+                      <span class="tech-chip px-2.5 py-0.5 rounded-lg text-xs font-medium border">AWS ECS</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Match Badge & Actions -->
+                <div class="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/40 sm:border-transparent">
+                  <span class="match-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-extrabold border">
+                    <!-- Solid calm indicator (NO BLINKING) -->
+                    <span class="w-2 h-2 rounded-full" id="matchDot1"></span>
+                    96% Match
+                  </span>
+                  <div class="flex items-center gap-2">
+                    <button onclick="openPitchModal('Swiggy', 'Ananya Rao', 'Platform Core')" class="pitch-btn min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-1 active:scale-95">
+                      ✨ Pitch & Diff
+                    </button>
+                    <button onclick="markApplied('Swiggy')" class="apply-btn min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold text-white shadow-sm transition active:scale-95" id="btnSwiggy">
+                      1-Click Apply
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recruiter Connection Ribbon -->
+              <div class="card-foot mt-4 pt-3.5 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="opacity-60">Recruiter:</span>
+                  <span class="font-semibold">Ananya Rao</span>
+                  <span class="connect-badge text-[11px] font-semibold px-2 py-0.5 rounded-full border">1st Degree Connect</span>
+                  <span class="opacity-60 hidden sm:inline">• Active 1h ago</span>
+                </div>
+                <button onclick="openPitchModal('Swiggy', 'Ananya Rao', 'Platform Core')" class="cta-link font-semibold hover:underline text-left sm:text-right">
+                  Open Tailored 10:00 AM Pitch Draft →
+                </button>
+              </div>
+            </div>
+
+            <!-- JOB CARD 2: Razorpay -->
+            <div class="card p-5 sm:p-6 rounded-2xl border shadow-xs transition hover:shadow-md" id="jobCard2">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div class="flex items-start gap-3.5">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-base shrink-0 shadow-xs" id="logoRazorpay">
+                    RP
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <h3 class="text-base font-bold">Razorpay</h3>
+                      <span class="text-xs opacity-70">• Bangalore (Koramangala)</span>
+                      <span class="px-2.5 py-0.5 text-xs font-mono font-bold rounded-lg border" id="salaryRazorpay">
+                        ₹32L - ₹40L
+                      </span>
+                    </div>
+                    <div class="text-xs font-semibold opacity-90 mt-1">
+                      Senior Backend Engineer (Core Payments Engine & Ledger)
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-1.5 mt-3">
+                      <span class="tech-chip px-2.5 py-0.5 rounded-lg text-xs font-medium border">Distributed Transactions</span>
+                      <span class="tech-chip px-2.5 py-0.5 rounded-lg text-xs font-medium border">PostgreSQL Tuning</span>
+                      <span class="tech-chip px-2.5 py-0.5 rounded-lg text-xs font-medium border">Idempotency & Sagas</span>
+                      <span class="tech-chip px-2.5 py-0.5 rounded-lg text-xs font-medium border">Kafka</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/40 sm:border-transparent">
+                  <span class="match-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-extrabold border">
+                    <!-- Solid calm indicator (NO BLINKING) -->
+                    <span class="w-2 h-2 rounded-full" id="matchDot2"></span>
+                    92% Match
+                  </span>
+                  <div class="flex items-center gap-2">
+                    <button onclick="openPitchModal('Razorpay', 'Vikram Mehta', 'Core Payments')" class="pitch-btn min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-1 active:scale-95">
+                      ✨ Pitch & Diff
+                    </button>
+                    <button onclick="markApplied('Razorpay')" class="apply-btn min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold text-white shadow-sm transition active:scale-95" id="btnRazorpay">
+                      1-Click Apply
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-foot mt-4 pt-3.5 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="opacity-60">Engineering Director:</span>
+                  <span class="font-semibold">Vikram Mehta</span>
+                  <span class="connect-badge text-[11px] font-semibold px-2 py-0.5 rounded-full border">2nd Degree Connect</span>
+                  <span class="opacity-60 hidden sm:inline">• 2 Mutual Colleagues</span>
+                </div>
+                <button onclick="openPitchModal('Razorpay', 'Vikram Mehta', 'Core Payments')" class="cta-link font-semibold hover:underline text-left sm:text-right">
+                  Open Tailored InMail Pitch Draft →
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ================= 72H ESCALATION & REJECTION RECOVERY SECTION ================= -->
+          <div class="card p-5 sm:p-6 rounded-2xl border shadow-xs" id="escalationSection">
+            <div class="flex items-center justify-between pb-3 border-b" id="escalationBorder">
+              <div>
+                <h3 class="text-sm font-bold flex items-center gap-2">
+                  <span>⏳</span> 72h Pipeline Triage & Ghosting Recovery
+                </h3>
+                <p class="text-xs opacity-75">Applications waiting >72h without response. Recover momentum or escalate.</p>
+              </div>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full" id="pendingLeadCount">2 Leads Pending</span>
+            </div>
+
+            <!-- Leads List with Recovery Action Loop -->
+            <div class="mt-4 space-y-3" id="leadsContainer">
+              
+              <!-- Lead 1: Zepto -->
+              <div class="p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 subcard" id="leadRowZepto">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-sm">Zepto</span>
+                    <span class="text-xs opacity-70">• SDE-2 Backend (Applied 4d ago)</span>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded border" id="leadTagZepto">72h Expired</span>
+                  </div>
+                  <p class="text-xs opacity-75 mt-1">Recruiter: Priya Sharma (Last active 2d ago)</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="openPitchModal('Zepto', 'Priya Sharma', 'Backend SDE-2')" class="pitch-btn px-3 py-1.5 rounded-lg text-xs font-semibold border transition">
+                    Send InMail Follow-up
+                  </button>
+                  <button onclick="triggerRecoveryLoop('Zepto', 'Ghosted')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-rose-500 hover:bg-rose-500/10 border border-rose-500/30 transition" title="Log as telemetry and preserve streak">
+                    Mark Ghosted / Close
+                  </button>
+                </div>
+              </div>
+
+              <!-- Lead 2: Groww -->
+              <div class="p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 subcard" id="leadRowGroww">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-sm">Groww</span>
+                    <span class="text-xs opacity-70">• Platform Engineer (Applied 3d ago)</span>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded border" id="leadTagGroww">72h Follow-up Due</span>
+                  </div>
+                  <p class="text-xs opacity-75 mt-1">EM: Karan Joshi (2nd Degree)</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="openPitchModal('Groww', 'Karan Joshi', 'Platform Engineer')" class="pitch-btn px-3 py-1.5 rounded-lg text-xs font-semibold border transition">
+                    Send Follow-up
+                  </button>
+                  <button onclick="triggerRecoveryLoop('Groww', 'No Response')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-rose-500 hover:bg-rose-500/10 border border-rose-500/30 transition">
+                    Mark Ghosted / Close
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </section>
+
+        <!-- RIGHT COLUMN (30% on desktop / 100% on mobile): Daily Shift Checklist + STAR Drawer -->
+        <aside class="lg:col-span-4 space-y-6">
+
+          <!-- Daily Work Plan Checklist (with Luminous Energy Level Toggle in Light Mode) -->
+          <div class="card p-5 sm:p-6 rounded-2xl border shadow-xs" id="shiftCard">
+            <div class="flex flex-col gap-3 pb-3.5 border-b" id="shiftBorder">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-xs font-bold uppercase tracking-wider">Daily Work Plan (IST)</h3>
+                  <p class="text-xs opacity-75 mt-0.5" id="shiftSubtext">Keeps your search consistent & effortless</p>
+                </div>
+                <span class="text-xs font-extrabold font-mono" id="taskCounter">3 / 6 Done</span>
+              </div>
+
+              <!-- In-Card Energy Level Switcher (Luminous container, no dull grey in light mode) -->
+              <div class="flex items-center justify-between p-1.5 rounded-xl border text-xs" id="energyCardBox">
+                <span class="opacity-80 font-medium pl-1 text-[11px]" id="energyLabel">Today's Energy:</span>
+                <div class="flex items-center gap-1">
+                  <button onclick="setEnergy('high')" id="btnCardHigh" class="px-2.5 py-1 rounded-lg font-bold text-white transition text-xs shadow-2xs">⚡ High</button>
+                  <button onclick="setEnergy('med')" id="btnCardMed" class="px-2.5 py-1 rounded-lg opacity-60 hover:opacity-100 transition text-xs">🔋 Med</button>
+                  <button onclick="setEnergy('low')" id="btnCardLow" class="px-2.5 py-1 rounded-lg opacity-60 hover:opacity-100 transition text-xs">🪫 Low</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Zero-Guilt Message Banner (Shown on Low Mode) -->
+            <div id="lowEnergyNotice" class="hidden p-3 rounded-xl border text-xs space-y-1" id="lowEnergyBox">
+              <div class="font-bold flex items-center gap-1.5 text-amber-500">
+                <span>🪫</span> Low Energy Mode Active
+              </div>
+              <p class="text-[11px] opacity-90 leading-relaxed">
+                Heavy day-job sprint? No problem. Non-essential tasks paused. Complete just <strong>Task 2 (09:15 AM Strike)</strong> and your day is a 100% win. Streak maintained! 🔥
+              </p>
+            </div>
+
+            <!-- Time-Block Checklist Items -->
+            <div class="mt-4 space-y-2.5" id="checklistTasks">
+              
+              <!-- Slot 1 (Prep) -->
+              <label class="check-box flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition min-h-[48px]" id="slotRow1">
+                <input type="checkbox" id="chk1" checked onchange="updateChecklist()" class="mt-1 w-4 h-4 rounded cursor-pointer">
+                <div class="flex-1 text-xs">
+                  <div class="flex items-center justify-between font-semibold">
+                    <span id="title1" class="line-through opacity-50">08:30 AM Prep</span>
+                    <span class="text-[10px] font-mono opacity-80" id="doneLabel1">Done ✓</span>
+                  </div>
+                  <p class="text-[11px] opacity-60 mt-0.5">LRU Cache target practiced</p>
+                </div>
+              </label>
+
+              <!-- Slot 2 (Active Sprint) -->
+              <label class="check-box-active flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer shadow-xs relative overflow-hidden min-h-[48px]" id="activeSprintBox">
+                <!-- Steady calm accent bar (NO BLINKING) -->
+                <div class="absolute top-0 left-0 bottom-0 w-1.5" id="sprintSolidBar"></div>
+                <input type="checkbox" id="chk2" onchange="updateChecklist()" class="mt-1 w-4 h-4 rounded cursor-pointer ml-1">
+                <div class="flex-1 text-xs">
+                  <div class="flex items-center justify-between font-bold" id="title2">
+                    <span>09:15 AM First Strike</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold" id="activeSprintLabel">Active</span>
+                  </div>
+                  <p class="text-[11px] opacity-90 mt-0.5">Submit top 5 freshly posted jobs</p>
+                </div>
+              </label>
+
+              <!-- Slot 3 (Naukri) -->
+              <label class="check-box flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition min-h-[48px]" id="slotRow3">
+                <input type="checkbox" id="chk3" onchange="updateChecklist()" class="mt-1 w-4 h-4 rounded cursor-pointer">
+                <div class="flex-1 text-xs">
+                  <div class="flex items-center justify-between font-medium">
+                    <span id="title3">09:55 AM Naukri Refresh</span>
+                    <span class="text-[10px] opacity-60 font-mono">In 31m</span>
+                  </div>
+                  <p class="text-[11px] opacity-60 mt-0.5">Algorithm bump & resume timestamp</p>
+                </div>
+              </label>
+
+              <!-- Slot 4 (EM Pitch) -->
+              <label class="check-box flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition min-h-[48px]" id="slotRow4">
+                <input type="checkbox" id="chk4" onchange="updateChecklist()" class="mt-1 w-4 h-4 rounded cursor-pointer">
+                <div class="flex-1 text-xs">
+                  <div class="flex items-center justify-between font-medium">
+                    <span id="title4">10:00 AM EM LinkedIn Pitch</span>
+                    <span class="text-[10px] opacity-60 font-mono">Scheduled</span>
+                  </div>
+                  <p class="text-[11px] opacity-60 mt-0.5">Direct pitch to Vikram Mehta</p>
+                </div>
+              </label>
+
+              <!-- Slot 5 (Office) -->
+              <label class="check-box flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition min-h-[48px]" id="slotRow5">
+                <input type="checkbox" id="chk5" onchange="updateChecklist()" class="mt-1 w-4 h-4 rounded cursor-pointer">
+                <div class="flex-1 text-xs">
+                  <div class="flex items-center justify-between font-medium">
+                    <span id="title5">11 AM - 8 PM Office Focus</span>
+                    <span class="text-[10px] opacity-60 font-mono">Locked</span>
+                  </div>
+                  <p class="text-[11px] opacity-60 mt-0.5">Primary day-job deliverables</p>
+                </div>
+              </label>
+
+              <!-- Slot 6 (Triage) -->
+              <label class="check-box flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition min-h-[48px]" id="slotRow6">
+                <input type="checkbox" id="chk6" onchange="updateChecklist()" class="mt-1 w-4 h-4 rounded cursor-pointer">
+                <div class="flex-1 text-xs">
+                  <div class="flex items-center justify-between font-medium">
+                    <span id="title6">08:30 PM Pipeline Triage</span>
+                    <span class="text-[10px] opacity-60 font-mono">Evening</span>
+                  </div>
+                  <p class="text-[11px] opacity-60 mt-0.5">72h follow-ups & CRM status check</p>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- Quick STAR Accomplishment Drawer -->
+          <div class="card p-5 rounded-2xl border shadow-xs" id="starCard">
+            <div class="flex items-center justify-between text-xs font-bold mb-2">
+              <span class="flex items-center gap-1.5">
+                <span>🏆</span> Fidelity STAR Metric
+              </span>
+              <span class="text-[10px] font-normal" id="starSubBadge">1-Click Paste</span>
+            </div>
+            <p class="text-xs leading-relaxed p-3 rounded-xl border font-mono opacity-85" id="starSnippet">
+              "Engineered distributed Kafka event pipeline at Fidelity, replacing legacy batching and cutting peak ingestion latency by 74% with zero data loss."
+            </p>
+            <button onclick="copyFidelityStar()" class="w-full mt-3 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border shadow-xs active:scale-95" id="btnCopyStar">
+              <span>📋</span> Copy STAR Elevator Pitch
+            </button>
+          </div>
+
+        </aside>
+
+      </div>
+
+    </main>
+
+    <!-- ================= MOBILE WEB BOTTOM NAVIGATION DOCK (STRICTLY MOBILE PHONE < 768px ONLY) ================= -->
+    <!-- Architectural Rule: Active ONLY on mobile web (< 768px). Desktop uses the top horizontal tabs! -->
+    <nav id="mobileDock" class="fixed bottom-0 left-0 right-0 z-40 border-t px-4 py-2 md:hidden flex items-center justify-around text-[10px] font-medium backdrop-blur-lg safe-bottom">
+      <button class="flex flex-col items-center gap-1 font-bold" id="mDockFeed">
+        <span class="text-base">🎯</span>
+        <span>Radar</span>
+      </button>
+      <button class="flex flex-col items-center gap-1 opacity-70" id="mDockShift">
+        <span class="text-base">⚡</span>
+        <span>Shift</span>
+      </button>
+      <button class="flex flex-col items-center gap-1 opacity-70" id="mDockPrep">
+        <span class="text-base">🧠</span>
+        <span>Deep Prep</span>
+      </button>
+      <button class="flex flex-col items-center gap-1 opacity-70" id="mDockPitch">
+        <span class="text-base">✉️</span>
+        <span>Pitches</span>
+      </button>
+      <button class="flex flex-col items-center gap-1 opacity-70" id="mDockProfile">
+        <span class="text-base">👤</span>
+        <span>Profile</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ================= INLINE MATCH DIFF & AI PITCH MODAL ================= -->
+  <div id="pitchModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="card border rounded-t-3xl sm:rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto" id="modalCard">
+      
+      <!-- Mobile Drag Handle -->
+      <div class="w-12 h-1 rounded-full bg-slate-400/40 mx-auto sm:hidden"></div>
+
+      <div class="flex items-center justify-between pb-3 border-b" id="modalBorder">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold" id="modalIcon">✨</span>
+          <div>
+            <h3 class="text-sm font-bold" id="modalTitle">AI Tailored Recruiter Pitch</h3>
+            <p class="text-xs opacity-70">Spliced with verified Fidelity metrics & company stack</p>
+          </div>
+        </div>
+        <button onclick="closePitchModal()" class="opacity-70 hover:opacity-100 text-lg p-1.5" aria-label="Close dialog">✕</button>
+      </div>
+
+      <!-- View Switcher (Preview vs Inline Match Diff) -->
+      <div class="flex items-center justify-between border-b pb-2.5 text-xs" id="pitchTabsBorder">
+        <div class="flex items-center gap-1.5">
+          <button onclick="setPitchTab('diff')" id="btnTabDiff" class="px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition">
+            <span>🔬</span> Match Diff Splicer (Why It Works)
+          </button>
+          <button onclick="setPitchTab('text')" id="btnTabText" class="px-3 py-1 rounded-lg font-medium opacity-60 hover:opacity-100 transition">
+            Raw InMail Preview
+          </button>
+        </div>
+        <span class="text-[10px] opacity-60">Fidelity Proof Spliced</span>
+      </div>
+
+      <!-- Tab 1: Inline Match Diff Viewer -->
+      <div id="tabDiffView" class="space-y-3">
+        <!-- Visual Splicing Legend -->
+        <div class="p-2.5 rounded-xl border text-[11px] flex flex-wrap items-center justify-between gap-2 subcard" id="diffLegendBox">
+          <div class="flex items-center gap-2">
+            <span class="diff-req">Target Company Need</span>
+            <span class="opacity-60">+</span>
+            <span class="diff-proof">Your Fidelity Proof</span>
+          </div>
+          <span class="font-bold text-emerald-500">96% Semantic Bridge</span>
+        </div>
+
+        <!-- Spliced Content with Visual Highlights -->
+        <div class="p-3.5 rounded-xl border subcard text-xs leading-relaxed space-y-2.5" id="diffSplicedContent">
+          <p>
+            Hi <span id="diffRecipient" class="font-bold">Ananya</span>,
+          </p>
+          <p>
+            I noticed Swiggy's opening for <span class="diff-req">Platform SDE-2 (Real-time Tracking)</span> requiring <span class="diff-req">Java 17 / Go</span> and <span class="diff-req">Kafka Stream Processing</span>.
+          </p>
+          <p>
+            At Fidelity Investments, I architected event streaming backends that <span class="diff-proof">replaced batch pipelines with distributed Kafka consumers</span>, cutting peak latency by <span class="diff-proof">74% with zero data loss</span> across <span class="diff-proof">2.1B+ daily messages</span>.
+          </p>
+          <p>
+            Given your focus on low-latency order dispatch, my background in <span class="diff-req">Kafka partition rebalance mitigation</span> and <span class="diff-proof">Redis caching</span> is a direct drop-in.
+          </p>
+          <p>
+            Would you be open to a 10-minute chat this week?
+          </p>
+        </div>
+      </div>
+
+      <!-- Tab 2: Raw Editable Textarea -->
+      <div id="tabTextView" class="space-y-2 hidden">
+        <label class="text-xs font-semibold">Editable Message:</label>
+        <textarea id="modalPitchText" rows="6" class="w-full border rounded-xl p-3 text-xs leading-relaxed font-sans focus:outline-none subcard"></textarea>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+        <span class="text-[11px]" id="modalWordCount">✓ 142 words · High-Signal Recruiter Pitch</span>
+        <div class="flex items-center justify-end gap-2">
+          <button onclick="closePitchModal()" class="px-3.5 py-2 rounded-xl text-xs font-medium opacity-70 hover:opacity-100">Cancel</button>
+          <button onclick="copyModalPitch()" class="apply-btn px-4 py-2.5 rounded-xl text-xs font-bold text-white shadow-md transition active:scale-95" id="btnCopyPitch">
+            Copy & Open LinkedIn
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= DISCRETE BOOKMARKLET QUICK-CAPTURE MODAL ================= -->
+  <!-- Replaced the annoying permanent top banner with a clean, on-demand modal! -->
+  <div id="bookmarkletModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="card border rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b" id="bmarkModalBorder">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold bg-amber-500/20 text-amber-500">📌</span>
+          <div>
+            <h3 class="text-sm font-bold">1-Click Quick-Capture Tool</h3>
+            <p class="text-xs opacity-70">Capture jobs from LinkedIn, Instahyre, or Naukri</p>
+          </div>
+        </div>
+        <button onclick="closeBookmarkletModal()" class="opacity-70 hover:opacity-100 text-lg p-1">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs opacity-85 leading-relaxed">
+        <p>
+          You don't need to manually copy-paste jobs. Drag this button once into your browser's Bookmarks Bar:
+        </p>
+        
+        <!-- Draggable Button -->
+        <div class="p-4 rounded-2xl border text-center subcard">
+          <a href="javascript:(function(){const title=document.title;alert('First50 Quick-Capture: Captured \''+title+'\' into your Morning Radar!');})();"
+             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/15 border-2 border-dashed border-amber-500 cursor-grab hover:bg-amber-500/25 transition select-none shadow-xs"
+             title="Drag this button to your Bookmarks Bar">
+            <span>📌</span> First50 Quick-Capture
+          </a>
+          <p class="text-[11px] opacity-65 mt-2">↑ Drag to your Bookmarks Bar (one-time setup)</p>
+        </div>
+
+        <p class="text-[11px] opacity-75">
+          Whenever you're on a job page, click the bookmarklet to instantly pipe the role and tech stack into your First50 Morning Radar!
+        </p>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 border-t" id="bmarkFootBorder">
+        <button onclick="copyBookmarkletScript()" class="text-xs font-semibold hover:underline" id="bmarkCopyLink">
+          Copy Raw JavaScript →
+        </button>
+        <button onclick="closeBookmarkletModal()" class="apply-btn px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs">
+          Got It, Done!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= GHOSTING / REJECTION RECOVERY TOAST ================= -->
+  <div id="recoveryToast" class="fixed bottom-6 right-6 z-50 max-w-md w-full border-2 rounded-2xl p-4 shadow-2xl space-y-2 hidden transform translate-y-4 transition-all" id="toastContainer">
+    <div class="flex items-start justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm" id="toastIconBox">🛡️</span>
+        <div>
+          <h4 class="text-xs font-bold" id="toastTitle">Resilience Telemetry Logged</h4>
+          <span class="text-[10px] font-mono" id="toastSub">Streak Preserved 🔥 · 19 / 25 Weekly Quota</span>
+        </div>
+      </div>
+      <button onclick="dismissToast()" class="opacity-60 hover:opacity-100 text-xs">✕</button>
+    </div>
+    <p class="text-xs opacity-90 leading-relaxed" id="toastMessage">
+      "Rejection is just telemetry. 1 strike logged toward your weekly quota of 25. Let's redirect energy to the next target: <strong>Razorpay</strong> is waiting."
+    </p>
+    <div class="flex items-center justify-end gap-2 pt-1">
+      <button onclick="dismissToast()" class="text-xs opacity-75 hover:opacity-100">Dismiss</button>
+      <button onclick="openPitchModal('Razorpay', 'Vikram Mehta', 'Core Payments'); dismissToast();" class="apply-btn px-3 py-1 rounded-lg text-xs font-bold text-white shadow-xs">
+        Strike Next Target →
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= LOGIC & REFINED THEME ENGINE ================= -->
+  <script>
+    let isDark = true;
+    let timerRunning = false;
+    let timerSeconds = 45 * 60;
+    let timerInterval = null;
+    let currentEnergy = 'high';
+
+    // REFINED COLOR PALETTES (ELIMINATING MUDDY GREYS IN LIGHT MODE):
+    // Light Mode: Luminous Electric Indigo & Radiant Violet with crisp white surfaces & soft lavender/indigo washes
+    // Dark Mode: Nordic Ocean & Arctic Cyan with deep abyssal navy surfaces
+    const theme = {
+      dark: {
+        bg: "#060C16",         // Deep Abyssal Navy
+        nav: "#091220",
+        evalBar: "#070E1A",
+        card: "#0C1728",       // Surface Card
+        subcard: "#070E1A",    // Inset Subcard
+        cardBorder: "#162844", // Clean Oceanic Hairline
+        text: "#F0F9FF",       // Sky White
+        mutedText: "#94A3B8",
+        primary: "#06B6D4",    // Arctic Cyan-500
+        primaryHover: "#0891B2",
+        primaryLight: "rgba(6, 182, 212, 0.12)",
+        primaryBorder: "rgba(6, 182, 212, 0.35)",
+        accent: "#38BDF8",     // Sky Ocean
+        accentLight: "rgba(56, 189, 248, 0.12)",
+        accentBorder: "rgba(56, 189, 248, 0.35)",
+        chipBg: "#070E1A",
+        chipText: "#94A3B8",
+        streakBg: "#0C1728",
+        streakText: "#FBBF24",
+        toastBg: "#0C1728",
+        toastBorder: "#06B6D4",
+      },
+      light: {
+        // LUMINOUS LIGHT MODE (NO MUDDY GREYS)
+        bg: "#F8FAFC",         // Crisp clean canvas
+        nav: "#FFFFFF",        // Pure white header
+        evalBar: "#FFFFFF",
+        card: "#FFFFFF",       // Pure white crisp cards
+        subcard: "#F5F3FF",    // Soft luminous lavender-indigo tint (NOT dull grey)
+        cardBorder: "#E0E7FF", // Crisp soft indigo-100 border
+        text: "#0F172A",       // Deep Slate-900 high-contrast text
+        mutedText: "#64748B",
+        primary: "#4F46E5",    // Electric Indigo-600
+        primaryHover: "#4338CA",
+        primaryLight: "#EEF2FF", // Luminous indigo wash (indigo-50)
+        primaryBorder: "#C7D2FE", // Indigo-200
+        accent: "#7C3AED",     // Royal Violet-600
+        accentLight: "#F5F3FF", // Violet-50
+        accentBorder: "#DDD6FE", // Violet-200
+        chipBg: "#EEF2FF",     // Clean indigo wash chips
+        chipText: "#3730A3",   // Deep indigo text
+        streakBg: "#FFFBEB",   // Warm amber wash
+        streakText: "#D97706",
+        toastBg: "#FFFFFF",
+        toastBorder: "#4F46E5",
+      }
+    };
+
+    function applyTheme() {
+      const p = theme[isDark ? 'dark' : 'light'];
+      const body = document.getElementById('appBody');
+      const evalBar = document.getElementById('evalBar');
+      const evalDot = document.getElementById('evalDot');
+      const evalBrand = document.getElementById('evalBrand');
+      const evalThemeTag = document.getElementById('evalThemeTag');
+      const viewportSwitchBox = document.getElementById('viewportSwitchBox');
+      const topNav = document.getElementById('topNav');
+      const logoMark = document.getElementById('logoMark');
+      const logoText = document.getElementById('logoText');
+      const sprintBadge = document.getElementById('sprintBadge');
+      const sprintDot = document.getElementById('sprintDot');
+      const btnCaptureTool = document.getElementById('btnCaptureTool');
+      const energyNavPill = document.getElementById('energyNavPill');
+      const streakPill = document.getElementById('streakPill');
+      const avatarBadge = document.getElementById('avatarBadge');
+      const desktopNavStrip = document.getElementById('desktopNavStrip');
+      const dTabRadar = document.getElementById('dTabRadar');
+      const assistBanner = document.getElementById('assistBanner');
+      const assistIconBox = document.getElementById('assistIconBox');
+      const highlightPhase = document.getElementById('highlightPhase');
+      const cards = document.querySelectorAll('.card');
+      const subcards = document.querySelectorAll('.subcard');
+      const applyBtns = document.querySelectorAll('.apply-btn');
+      const pitchBtns = document.querySelectorAll('.pitch-btn');
+      const techChips = document.querySelectorAll('.tech-chip');
+      const matchBadges = document.querySelectorAll('.match-badge');
+      const matchDot1 = document.getElementById('matchDot1');
+      const matchDot2 = document.getElementById('matchDot2');
+      const cardFoots = document.querySelectorAll('.card-foot');
+      const connectBadges = document.querySelectorAll('.connect-badge');
+      const ctaLinks = document.querySelectorAll('.cta-link');
+      const checkBoxes = document.querySelectorAll('.check-box');
+      const activeSprintBox = document.getElementById('activeSprintBox');
+      const activeSprintLabel = document.getElementById('activeSprintLabel');
+      const sprintSolidBar = document.getElementById('sprintSolidBar');
+      const taskCounter = document.getElementById('taskCounter');
+      const energyCardBox = document.getElementById('energyCardBox');
+      const starSubBadge = document.getElementById('starSubBadge');
+      const starSnippet = document.getElementById('starSnippet');
+      const btnCopyStar = document.getElementById('btnCopyStar');
+      const prepTimerBtn = document.getElementById('prepTimerBtn');
+      const prepIconBox = document.getElementById('prepIconBox');
+      const prepBorder = document.getElementById('prepBorder');
+      const shiftBorder = document.getElementById('shiftBorder');
+      const dsaTitle = document.getElementById('dsaTitle');
+      const sysTitle = document.getElementById('sysTitle');
+      const dsaBadge = document.getElementById('dsaBadge');
+      const sysBadge = document.getElementById('sysBadge');
+      const dsaLink = document.getElementById('dsaLink');
+      const sysLink = document.getElementById('sysLink');
+      const dsaFoot = document.getElementById('dsaFoot');
+      const sysFoot = document.getElementById('sysFoot');
+      const curatedBadge = document.getElementById('curatedBadge');
+      const salarySwiggy = document.getElementById('salarySwiggy');
+      const salaryRazorpay = document.getElementById('salaryRazorpay');
+      const logoSwiggy = document.getElementById('logoSwiggy');
+      const logoRazorpay = document.getElementById('logoRazorpay');
+      const kpiBar1 = document.getElementById('kpiBar1');
+      const kpiTrack1 = document.getElementById('kpiTrack1');
+      const kpiMatch = document.getElementById('kpiMatch');
+      const kpiMatchSub = document.getElementById('kpiMatchSub');
+      const mobileDock = document.getElementById('mobileDock');
+      const mDockFeed = document.getElementById('mDockFeed');
+      const toastContainer = document.getElementById('toastContainer');
+      const toastIconBox = document.getElementById('toastIconBox');
+      const toastTitle = document.getElementById('toastTitle');
+      const toastSub = document.getElementById('toastSub');
+      const bmarkModalBorder = document.getElementById('bmarkModalBorder');
+      const bmarkFootBorder = document.getElementById('bmarkFootBorder');
+      const bmarkCopyLink = document.getElementById('bmarkCopyLink');
+      const pitchTabsBorder = document.getElementById('pitchTabsBorder');
+      const btnTabDiff = document.getElementById('btnTabDiff');
+      const leadTagZepto = document.getElementById('leadTagZepto');
+      const leadTagGroww = document.getElementById('leadTagGroww');
+      const pendingLeadCount = document.getElementById('pendingLeadCount');
+
+      // Body & Navbars
+      body.style.backgroundColor = p.bg;
+      body.style.color = p.text;
+      evalBar.style.backgroundColor = p.evalBar;
+      evalBar.style.borderColor = p.cardBorder;
+      evalDot.style.backgroundColor = p.primary;
+      evalBrand.style.color = p.text;
+      evalThemeTag.textContent = isDark ? "Nordic Ocean & Arctic Cyan Dark Mode" : "Luminous Electric Indigo Light Mode";
+      viewportSwitchBox.style.borderColor = p.cardBorder;
+      viewportSwitchBox.style.backgroundColor = isDark ? "#091220" : "#F1F5F9";
+
+      topNav.style.backgroundColor = p.nav;
+      topNav.style.borderColor = p.cardBorder;
+
+      if (desktopNavStrip) {
+        desktopNavStrip.style.backgroundColor = isDark ? "#080F1C" : "#FFFFFF";
+        desktopNavStrip.style.borderColor = p.cardBorder;
+        dTabRadar.style.backgroundColor = p.primaryLight;
+        dTabRadar.style.color = p.primary;
+      }
+
+      if (mobileDock) {
+        mobileDock.style.backgroundColor = p.nav;
+        mobileDock.style.borderColor = p.cardBorder;
+        mDockFeed.style.color = p.primary;
+      }
+
+      // Brand
+      logoMark.style.backgroundColor = p.primary;
+      logoText.style.color = p.text;
+      sprintBadge.style.backgroundColor = p.primaryLight;
+      sprintBadge.style.borderColor = p.primaryBorder;
+      sprintBadge.style.color = p.primary;
+      sprintDot.style.backgroundColor = p.primary; // Steady solid dot (NO BLINK)
+
+      btnCaptureTool.style.backgroundColor = p.primaryLight;
+      btnCaptureTool.style.borderColor = p.primaryBorder;
+      btnCaptureTool.style.color = p.primary;
+
+      energyNavPill.style.backgroundColor = isDark ? "#0C1728" : "#FFFFFF";
+      energyNavPill.style.borderColor = p.cardBorder;
+
+      streakPill.style.backgroundColor = p.streakBg;
+      streakPill.style.borderColor = isDark ? p.cardBorder : "#FDE68A";
+      streakPill.style.color = p.streakText;
+
+      avatarBadge.style.backgroundColor = p.primaryLight;
+      avatarBadge.style.borderColor = p.primaryBorder;
+      avatarBadge.style.color = p.primary;
+
+      // Assist Banner
+      assistBanner.style.backgroundColor = isDark ? p.card : "#FFFFFF";
+      assistBanner.style.borderColor = p.cardBorder;
+      assistIconBox.style.backgroundColor = p.primaryLight;
+      assistIconBox.style.color = p.primary;
+      if (highlightPhase) highlightPhase.style.color = p.primary;
+
+      // Cards & Subcards
+      cards.forEach(c => {
+        c.style.backgroundColor = p.card;
+        c.style.borderColor = p.cardBorder;
+      });
+      subcards.forEach(sc => {
+        sc.style.backgroundColor = p.subcard;
+        sc.style.borderColor = p.cardBorder;
+      });
+
+      // Buttons
+      applyBtns.forEach(b => {
+        b.style.backgroundColor = p.primary;
+        b.onmouseover = () => b.style.backgroundColor = p.primaryHover;
+        b.onmouseout = () => b.style.backgroundColor = p.primary;
+      });
+      pitchBtns.forEach(b => {
+        b.style.backgroundColor = isDark ? p.subcard : "#FFFFFF";
+        b.style.borderColor = p.cardBorder;
+        b.style.color = p.text;
+      });
+
+      // Tech Chips (Clean indigo tint in light mode, no dull grey)
+      techChips.forEach(tc => {
+        tc.style.backgroundColor = p.chipBg;
+        tc.style.borderColor = isDark ? p.cardBorder : "#C7D2FE";
+        tc.style.color = p.chipText;
+      });
+      matchBadges.forEach(mb => {
+        mb.style.backgroundColor = p.accentLight;
+        mb.style.borderColor = p.accentBorder;
+        mb.style.color = p.accent;
+      });
+      matchDot1.style.backgroundColor = p.accent;
+      matchDot2.style.backgroundColor = p.accent;
+
+      // Card Footers
+      cardFoots.forEach(cf => cf.style.borderColor = p.cardBorder);
+      connectBadges.forEach(cb => {
+        cb.style.backgroundColor = p.primaryLight;
+        cb.style.borderColor = p.primaryBorder;
+        cb.style.color = p.primary;
+      });
+      ctaLinks.forEach(cl => cl.style.color = p.primary);
+
+      // Checklist Rows
+      checkBoxes.forEach(cb => {
+        cb.style.backgroundColor = isDark ? p.subcard : "#FFFFFF";
+        cb.style.borderColor = p.cardBorder;
+      });
+      activeSprintBox.style.backgroundColor = p.primaryLight;
+      activeSprintBox.style.borderColor = p.primary;
+      activeSprintLabel.style.backgroundColor = p.primary;
+      activeSprintLabel.style.color = "#FFFFFF";
+      sprintSolidBar.style.backgroundColor = p.primary;
+      taskCounter.style.color = p.primary;
+
+      // Energy Card Box (Luminous, no muddy grey)
+      if (energyCardBox) {
+        energyCardBox.style.backgroundColor = isDark ? "#070E1A" : "#FFFFFF";
+        energyCardBox.style.borderColor = p.cardBorder;
+      }
+
+      // STAR Card
+      starSubBadge.style.color = p.accent;
+      starSnippet.style.backgroundColor = p.subcard;
+      starSnippet.style.borderColor = p.cardBorder;
+      btnCopyStar.style.backgroundColor = isDark ? p.subcard : p.primaryLight;
+      btnCopyStar.style.borderColor = p.primaryBorder;
+      btnCopyStar.style.color = p.text;
+
+      // Prep Drill
+      prepTimerBtn.style.backgroundColor = p.primaryLight;
+      prepTimerBtn.style.borderColor = p.primaryBorder;
+      prepTimerBtn.style.color = p.primary;
+      prepIconBox.style.backgroundColor = p.primaryLight;
+      prepIconBox.style.color = p.primary;
+      prepBorder.style.borderColor = p.cardBorder;
+      shiftBorder.style.borderColor = p.cardBorder;
+      dsaTitle.style.color = p.primary;
+      sysTitle.style.color = p.accent;
+      dsaBadge.style.borderColor = p.cardBorder;
+      sysBadge.style.borderColor = p.cardBorder;
+      dsaLink.style.color = p.primary;
+      sysLink.style.color = p.accent;
+      dsaFoot.style.borderColor = p.cardBorder;
+      sysFoot.style.borderColor = p.cardBorder;
+
+      // Verified & Salary
+      curatedBadge.style.backgroundColor = p.primaryLight;
+      curatedBadge.style.borderColor = p.primaryBorder;
+      curatedBadge.style.color = p.primary;
+      salarySwiggy.style.backgroundColor = p.primaryLight;
+      salarySwiggy.style.borderColor = p.primaryBorder;
+      salarySwiggy.style.color = p.primary;
+      salaryRazorpay.style.backgroundColor = p.primaryLight;
+      salaryRazorpay.style.borderColor = p.primaryBorder;
+      salaryRazorpay.style.color = p.primary;
+
+      logoSwiggy.style.backgroundColor = isDark ? "rgba(249, 115, 22, 0.15)" : "#FFEDD5";
+      logoSwiggy.style.color = "#F97316";
+      logoRazorpay.style.backgroundColor = isDark ? "rgba(59, 130, 246, 0.15)" : "#DBEAFE";
+      logoRazorpay.style.color = "#3B82F6";
+
+      // KPI Bar
+      if (kpiBar1) kpiBar1.style.backgroundColor = p.primary;
+      if (kpiTrack1) kpiTrack1.style.backgroundColor = isDark ? p.subcard : "#E0E7FF";
+      if (kpiMatch) kpiMatch.style.color = p.accent;
+      if (kpiMatchSub) kpiMatchSub.style.color = p.accent;
+
+      // Toast
+      if (toastContainer) {
+        toastContainer.style.backgroundColor = p.toastBg;
+        toastContainer.style.borderColor = p.toastBorder;
+      }
+      if (toastIconBox) {
+        toastIconBox.style.backgroundColor = p.primaryLight;
+        toastIconBox.style.color = p.primary;
+      }
+      if (toastTitle) toastTitle.style.color = p.text;
+      if (toastSub) toastSub.style.color = p.primary;
+
+      // Bookmarklet Modal Borders
+      if (bmarkModalBorder) bmarkModalBorder.style.borderColor = p.cardBorder;
+      if (bmarkFootBorder) bmarkFootBorder.style.borderColor = p.cardBorder;
+      if (bmarkCopyLink) bmarkCopyLink.style.color = p.primary;
+
+      // Pitch Modal Tabs
+      if (pitchTabsBorder) pitchTabsBorder.style.borderColor = p.cardBorder;
+      if (btnTabDiff) {
+        btnTabDiff.style.backgroundColor = p.primaryLight;
+        btnTabDiff.style.borderColor = p.primaryBorder;
+        btnTabDiff.style.color = p.primary;
+      }
+
+      // Escalation Tags
+      if (pendingLeadCount) {
+        pendingLeadCount.style.backgroundColor = "rgba(244, 63, 94, 0.1)";
+        pendingLeadCount.style.color = "#F43F5E";
+        pendingLeadCount.style.borderColor = "rgba(244, 63, 94, 0.25)";
+      }
+      if (leadTagZepto) {
+        leadTagZepto.style.backgroundColor = "rgba(244, 63, 94, 0.1)";
+        leadTagZepto.style.color = "#F43F5E";
+        leadTagZepto.style.borderColor = "rgba(244, 63, 94, 0.25)";
+      }
+      if (leadTagGroww) {
+        leadTagGroww.style.backgroundColor = isDark ? "rgba(245, 158, 11, 0.1)" : "#FEF3C7";
+        leadTagGroww.style.color = isDark ? "#FBBF24" : "#D97706";
+        leadTagGroww.style.borderColor = isDark ? "rgba(245, 158, 11, 0.25)" : "#FDE68A";
+      }
+
+      // Re-apply Energy Buttons state styling for active theme
+      setEnergy(currentEnergy, false);
+    }
+
+    // Toggle Theme
+    function toggleTheme() {
+      isDark = !isDark;
+      const html = document.documentElement;
+      if (isDark) {
+        html.classList.add('dark');
+      } else {
+        html.classList.remove('dark');
+      }
+      const themeIcon = document.getElementById('themeIcon');
+      const themeLabel = document.getElementById('themeLabel');
+      themeIcon.textContent = isDark ? "☀️" : "🌙";
+      themeLabel.textContent = isDark ? "Light Mode" : "Dark Mode";
+      applyTheme();
+    }
+
+    // Toggle Viewport Simulation (Desktop vs Mobile Frame)
+    function setViewport(device) {
+      const wrapper = document.getElementById('deviceWrapper');
+      const btnDesk = document.getElementById('btnDesk');
+      const btnMob = document.getElementById('btnMob');
+      const p = theme[isDark ? 'dark' : 'light'];
+
+      if (device === 'mobile') {
+        wrapper.classList.add('phone-simulator-frame');
+        btnMob.className = "px-2.5 py-1 rounded-md font-semibold text-white transition";
+        btnMob.style.backgroundColor = p.primary;
+        btnDesk.className = "px-2.5 py-1 rounded-md font-medium opacity-70 hover:opacity-100 transition";
+        btnDesk.style.backgroundColor = "transparent";
+      } else {
+        wrapper.classList.remove('phone-simulator-frame');
+        btnDesk.className = "px-2.5 py-1 rounded-md font-semibold text-white transition";
+        btnDesk.style.backgroundColor = p.primary;
+        btnMob.className = "px-2.5 py-1 rounded-md font-medium opacity-70 hover:opacity-100 transition";
+        btnMob.style.backgroundColor = "transparent";
+      }
+    }
+
+    // ================= ENHANCEMENT 1: ENERGY LEVEL TOGGLE =================
+    function setEnergy(level, updateCheck = true) {
+      currentEnergy = level;
+      const p = theme[isDark ? 'dark' : 'light'];
+      const btnNavH = document.getElementById('btnEnergyHigh');
+      const btnNavM = document.getElementById('btnEnergyMed');
+      const btnNavL = document.getElementById('btnEnergyLow');
+      const btnCardH = document.getElementById('btnCardHigh');
+      const btnCardM = document.getElementById('btnCardMed');
+      const btnCardL = document.getElementById('btnCardLow');
+
+      const notice = document.getElementById('lowEnergyNotice');
+      const prepBadge = document.getElementById('lowEnergyBadge');
+      const prepDrills = document.getElementById('prepDrillsGrid');
+      const shiftSubtext = document.getElementById('shiftSubtext');
+      const assistMsg = document.getElementById('assistMessage');
+
+      const slot1 = document.getElementById('slotRow1');
+      const slot3 = document.getElementById('slotRow3');
+      const slot4 = document.getElementById('slotRow4');
+      const slot5 = document.getElementById('slotRow5');
+      const slot6 = document.getElementById('slotRow6');
+
+      // Reset all buttons
+      [btnNavH, btnNavM, btnNavL, btnCardH, btnCardM, btnCardL].forEach(b => {
+        b.className = "px-2.5 py-1 rounded-lg opacity-60 hover:opacity-100 transition text-xs font-semibold";
+        b.style.backgroundColor = "transparent";
+        b.style.color = p.text;
+      });
+
+      if (level === 'high') {
+        [btnNavH, btnCardH].forEach(b => {
+          b.className = "px-2.5 py-1 rounded-lg font-bold text-white transition text-xs shadow-xs";
+          b.style.backgroundColor = p.primary;
+          b.style.color = "#FFFFFF";
+        });
+        notice.classList.add('hidden');
+        prepBadge.classList.add('hidden');
+        prepDrills.classList.remove('opacity-40');
+        [slot1, slot3, slot4, slot5, slot6].forEach(s => s.classList.remove('hidden', 'opacity-30'));
+        shiftSubtext.textContent = "Keeps your search consistent & effortless";
+        assistMsg.innerHTML = "You are in the <strong>09:15 AM First Strike Window</strong>. 2 of 5 targeted applications logged.";
+      } else if (level === 'med') {
+        [btnNavM, btnCardM].forEach(b => {
+          b.className = "px-2.5 py-1 rounded-lg font-bold text-white transition text-xs shadow-xs";
+          b.style.backgroundColor = p.primary;
+          b.style.color = "#FFFFFF";
+        });
+        notice.classList.add('hidden');
+        prepBadge.classList.add('hidden');
+        prepDrills.classList.remove('opacity-40');
+        slot1.classList.add('opacity-30');
+        slot5.classList.add('hidden');
+        slot6.classList.remove('hidden');
+        shiftSubtext.textContent = "Core Sprint: Strike, Naukri, & Pitch prioritized";
+        assistMsg.innerHTML = "Moderate pace active: Focus on <strong>09:15 AM Strike</strong> & <strong>10:00 AM Pitch</strong>.";
+      } else if (level === 'low') {
+        [btnNavL, btnCardL].forEach(b => {
+          b.className = "px-2.5 py-1 rounded-lg font-bold text-white transition text-xs shadow-xs";
+          b.style.backgroundColor = "#F59E0B"; // Amber
+          b.style.color = "#FFFFFF";
+        });
+        notice.classList.remove('hidden');
+        prepBadge.classList.remove('hidden');
+        prepDrills.classList.add('opacity-40');
+        // Hide non-essentials, only keep active strike
+        slot1.classList.add('hidden');
+        slot3.classList.add('hidden');
+        slot4.classList.add('hidden');
+        slot5.classList.add('hidden');
+        slot6.classList.add('hidden');
+        shiftSubtext.textContent = "Zero-Guilt Mode: Just 1 high-impact action today";
+        assistMsg.innerHTML = "Low Energy Mode: <strong>Just complete 09:15 AM Strike</strong> to keep streak 100% intact! 🔥";
+      }
+
+      if (updateCheck) updateChecklist();
+    }
+
+    // ================= ENHANCEMENT 2: REJECTION & GHOSTING RECOVERY LOOP =================
+    function triggerRecoveryLoop(companyName, statusReason) {
+      const row = document.getElementById('leadRow' + companyName);
+      const toast = document.getElementById('recoveryToast');
+      const toastMsg = document.getElementById('toastMessage');
+      const quota = document.getElementById('kpiQuota');
+
+      // Smoothly archive row
+      if (row) {
+        row.style.opacity = '0';
+        row.style.transform = 'translateX(20px)';
+        setTimeout(() => row.remove(), 250);
+      }
+
+      // Update Quota telemetry
+      quota.textContent = "19 / 25";
+      const pendingCount = document.getElementById('pendingLeadCount');
+      if (pendingCount) pendingCount.textContent = "1 Lead Pending";
+
+      // Show encouraging micro-interaction toast
+      toastMsg.innerHTML = `"${statusReason} from ${companyName} logged as telemetry. <strong>1 strike recorded toward your weekly quota of 25 (19/25)</strong>. Streak preserved 🔥. Rejections are simply data points. Let's redirect energy to <strong>Razorpay</strong>."`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.remove('translate-y-4'), 20);
+    }
+
+    function dismissToast() {
+      const toast = document.getElementById('recoveryToast');
+      toast.classList.add('translate-y-4');
+      setTimeout(() => toast.classList.add('hidden'), 200);
+    }
+
+    function scrollToEscalations() {
+      document.getElementById('escalationSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ================= ENHANCEMENT 3: INLINE MATCH DIFF SPLICER =================
+    function setPitchTab(tab) {
+      const btnDiff = document.getElementById('btnTabDiff');
+      const btnText = document.getElementById('btnTabText');
+      const diffView = document.getElementById('tabDiffView');
+      const textView = document.getElementById('tabTextView');
+      const p = theme[isDark ? 'dark' : 'light'];
+
+      if (tab === 'diff') {
+        btnDiff.style.backgroundColor = p.primaryLight;
+        btnDiff.style.borderColor = p.primaryBorder;
+        btnDiff.style.color = p.primary;
+        btnText.style.backgroundColor = "transparent";
+        btnText.style.borderColor = "transparent";
+        diffView.classList.remove('hidden');
+        textView.classList.add('hidden');
+      } else {
+        btnText.style.backgroundColor = p.primaryLight;
+        btnText.style.borderColor = p.primaryBorder;
+        btnText.style.color = p.primary;
+        btnDiff.style.backgroundColor = "transparent";
+        btnDiff.style.borderColor = "transparent";
+        textView.classList.remove('hidden');
+        diffView.classList.add('hidden');
+      }
+    }
+
+    // ================= ENHANCEMENT 4: QUICK-CAPTURE BOOKMARKLET MODAL (ON-DEMAND) =================
+    function openBookmarkletModal() {
+      document.getElementById('bookmarkletModal').classList.remove('hidden');
+    }
+
+    function closeBookmarkletModal() {
+      document.getElementById('bookmarkletModal').classList.add('hidden');
+    }
+
+    function copyBookmarkletScript() {
+      const code = `javascript:(function(){const title=document.title;const url=window.location.href;alert('First50 Quick-Capture: Captured "' + title + '" into your Morning Radar queue!');})();`;
+      navigator.clipboard.writeText(code);
+      alert('✓ First50 Bookmarklet script copied to clipboard! You can paste it into a new bookmark URL in your browser.');
+    }
+
+    // Interactive Checklist Updater
+    function updateChecklist() {
+      let done = 0;
+      let totalVisible = 0;
+      for (let i = 1; i <= 6; i++) {
+        const chk = document.getElementById('chk' + i);
+        const title = document.getElementById('title' + i);
+        const slot = document.getElementById('slotRow' + i) || document.getElementById('activeSprintBox');
+        
+        if (slot && !slot.classList.contains('hidden')) {
+          totalVisible++;
+          if (chk && chk.checked) {
+            done++;
+            if (title) title.className = "line-through opacity-50";
+          } else if (title) {
+            title.className = (i === 2) ? "font-bold" : "font-semibold";
+          }
+        }
+      }
+      document.getElementById('taskCounter').textContent = `${done} / ${totalVisible} Done`;
+    }
+
+    // 45m Deep Prep Timer
+    function toggleTimer() {
+      const btn = document.getElementById('prepTimerBtn');
+      const display = document.getElementById('timerDisplay');
+      if (timerRunning) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        btn.querySelector('span:first-child').textContent = "▶";
+      } else {
+        timerRunning = true;
+        btn.querySelector('span:first-child').textContent = "⏸";
+        timerInterval = setInterval(() => {
+          if (timerSeconds <= 0) {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            display.textContent = "Done!";
+            return;
+          }
+          timerSeconds--;
+          const m = Math.floor(timerSeconds / 60);
+          const s = timerSeconds % 60;
+          display.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }, 1000);
+      }
+    }
+
+    // 1-Click Apply Simulation
+    function markApplied(company) {
+      const btn = document.getElementById('btn' + company);
+      if (btn) {
+        btn.textContent = "Applied ✓";
+        btn.style.opacity = "0.75";
+        const chk2 = document.getElementById('chk2');
+        if (chk2) {
+          chk2.checked = true;
+          updateChecklist();
+        }
+      }
+    }
+
+    // STAR Copy Simulation
+    function copyFidelityStar() {
+      const btn = document.getElementById('btnCopyStar');
+      btn.innerHTML = "<span>✓</span> Copied to Clipboard!";
+      setTimeout(() => {
+        btn.innerHTML = "<span>📋</span> Copy STAR Elevator Pitch";
+      }, 2500);
+    }
+
+    // Pitch Modal
+    function openPitchModal(company, recipient, domain) {
+      const modal = document.getElementById('pitchModal');
+      const title = document.getElementById('modalTitle');
+      const textarea = document.getElementById('modalPitchText');
+      const diffRecipient = document.getElementById('diffRecipient');
+
+      title.textContent = `AI Tailored Pitch for ${company} (${recipient})`;
+      if (diffRecipient) diffRecipient.textContent = recipient.split(' ')[0];
+      
+      textarea.value = `Hi ${recipient.split(' ')[0]},\n\nI noticed ${company}'s opening for ${domain} requiring Kafka Stream Processing and distributed caching.\n\nAt Fidelity Investments, I architected event streaming backends that replaced batch pipelines with distributed Kafka consumers, cutting peak latency by 74% with zero data loss across 2.1B+ daily messages.\n\nGiven your focus on low-latency order dispatch, my background in Kafka partition rebalance mitigation and Redis caching is a direct drop-in.\n\nWould you be open to a 10-minute chat this week?\n\nBest,\nRahul Prasanna\ngithub.com/rahulprasanna`;
+
+      modal.classList.remove('hidden');
+    }
+
+    function closePitchModal() {
+      document.getElementById('pitchModal').classList.add('hidden');
+    }
+
+    function copyModalPitch() {
+      const btn = document.getElementById('btnCopyPitch');
+      btn.textContent = "Copied! Opening LinkedIn...";
+      setTimeout(() => {
+        closePitchModal();
+        btn.textContent = "Copy & Open LinkedIn";
+      }, 1200);
+    }
+
+    // Initial load
+    applyTheme();
+  </script>
+</body>
+</html>

@@ -34,7 +34,6 @@ export function LandingPage({ onExploreDemo, onSignIn }: LandingPageProps) {
             <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 font-mono text-base font-black text-slate-950 shadow-lg shadow-emerald-500/20">
               F50
               <span className="absolute -right-1 -top-1 flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
               </span>
             </div>
