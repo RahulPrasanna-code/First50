@@ -408,7 +408,7 @@ export default function Home() {
                   )}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Targeted SDE-2 DSA problem & Distributed Systems architecture pattern for today.
+                  Targeted daily DSA drill & Distributed Systems architecture pattern for today.
                 </p>
               </div>
             </div>
@@ -483,7 +483,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="mt-2.5 pt-2 border-t border-hairline-light dark:border-hairline-dark flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 dark:text-slate-400 font-mono">Tier-1 SDE-2 Bar</span>
+                <span className="text-slate-500 dark:text-slate-400 font-mono">Tier-1 Technical Bar</span>
                 <a
                   href={todayPrepTopic.distSysReadingUrl}
                   target="_blank"

@@ -126,7 +126,7 @@ export function LandingPage({ onExploreDemo, onSignIn }: LandingPageProps) {
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl text-slate-900 dark:text-slate-100">
             Bypass the 500+ Queue.{" "}
             <span className="block mt-1 bg-gradient-to-r from-brand-indigo via-purple-600 to-brand-cyan dark:from-brand-cyan dark:via-sky-400 dark:to-indigo-400 bg-clip-text text-transparent">
-              Land Tier-1 SDE-2 Offers.
+              Land Top Software Engineer Offers.
             </span>
           </h1>
 
@@ -435,7 +435,7 @@ export function LandingPage({ onExploreDemo, onSignIn }: LandingPageProps) {
                       <div>
                         <span className="font-mono text-[10px] font-bold text-brand-indigo dark:text-brand-cyan">08:30 – 09:15 AM</span>
                         <div className={`text-xs font-semibold ${checkedItems["task-1"] ? "line-through text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
-                          Daily SDE-2 Deep Prep Drill
+                          Daily Technical Deep Prep Drill
                         </div>
                       </div>
                       <CheckCircle2 className={`h-5 w-5 ${checkedItems["task-1"] ? "text-emerald-600 dark:text-emerald-400" : "text-slate-300 dark:text-slate-600"}`} />
@@ -685,7 +685,7 @@ export function LandingPage({ onExploreDemo, onSignIn }: LandingPageProps) {
             <LogoIcon className="h-12 w-12" />
           </div>
           <h2 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 sm:text-4xl tracking-tight">
-            Start Landing High-Velocity SDE-2 Interviews.
+            Start Landing High-Velocity Engineering Interviews.
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
             Build your private job radar, track your follow-up pipeline, and master daily deep prep without giving up your day job.

@@ -34,13 +34,13 @@ Return ONLY a raw JSON object with this EXACT structure (no markdown, no backtic
   "dsaDifficulty": "Medium" or "Hard",
   "dsaPattern": string (Core algorithmic pattern e.g. "Monotonic Stack", "Sliding Window", "Topological Sort"),
   "dsaUrl": string (Direct working URL to problem on LeetCode e.g. "https://leetcode.com/problems/..."),
-  "dsaKeyInsight": string (2-3 sentences explaining the non-obvious algorithmic trick and SDE-2 follow-up),
+  "dsaKeyInsight": string (2-3 sentences explaining the non-obvious algorithmic trick and technical interview follow-up),
   "distSysTitle": string (A high-yield distributed systems architecture topic),
   "distSysCategory": string (Category e.g. "Caching", "Concurrency", "Database Scaling", "Fault Tolerance"),
   "distSysReadingUrl": string (URL to a classic paper, engineering blog, or System Design Primer),
   "distSysReadingTitle": string (Name of the article or whitepaper),
   "distSysSummary": string (3-4 sentences explaining trade-offs, architecture, and common pitfalls),
-  "fidelityConnection": string (How Rahul can cite this in an SDE-2 interview using his Fidelity 2.1B+ scale or 90% latency reduction experience),
+  "fidelityConnection": string (How Rahul can cite this in technical interviews using his Fidelity 2.1B+ scale or 90% latency reduction experience),
   "interviewTip": string (1-2 sentences on what Tier-1 interviewers look for when asking this)
 }
 `;

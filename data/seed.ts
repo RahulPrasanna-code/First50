@@ -27,8 +27,7 @@ export const RAHUL_PRIVATE_PROFILE: UserProfile = {
   education: "B.Tech in Information Technology, Thiagarajar College of Engineering (Graduated 2024, CGPA: 9.1/10.0)",
   shiftHours: "11:00 AM – 8:00 PM IST",
   targetRoles: [
-    "SDE-1 (Lateral)",
-    "SDE-2",
+    "Software Engineer",
     "Backend Software Engineer",
     "Distributed Systems Engineer",
     "Cloud Platform Engineer"
@@ -81,7 +80,7 @@ export const DEMO_GUEST_PROFILE: UserProfile = {
   education: "B.Tech in Computer Science & Engineering",
   shiftHours: "10:00 AM – 7:00 PM IST",
   targetRoles: [
-    "SDE-2",
+    "Software Engineer",
     "Backend Software Engineer",
     "Distributed Systems Engineer",
     "Cloud Infrastructure Engineer"
@@ -305,7 +304,7 @@ export const ROTATING_PREP_TOPICS: DeepPrepTopic[] = [
     dsaDifficulty: "Medium",
     dsaPattern: "Doubly Linked List + Hash Map (O(1) Get & Put)",
     dsaUrl: "https://leetcode.com/problems/lru-cache/",
-    dsaKeyInsight: "Use dummy head and tail nodes to eliminate edge cases when inserting/deleting. For SDE-2 follow-up: Explain thread-safety via ReentrantReadWriteLock vs ConcurrentLinkedQueue.",
+    dsaKeyInsight: "Use dummy head and tail nodes to eliminate edge cases when inserting/deleting. For advanced follow-up: Explain thread-safety via ReentrantReadWriteLock vs ConcurrentLinkedQueue.",
     distSysTitle: "Distributed Caching & Eviction Policies",
     distSysCategory: "Caching Architecture",
     distSysReadingUrl: "https://github.com/donnemartin/system-design-primer#distributed-cache",
@@ -328,7 +327,7 @@ export const ROTATING_PREP_TOPICS: DeepPrepTopic[] = [
     distSysReadingTitle: "AWS SQS Deep Dive: Visibility Timeouts & Dead-Letter Queues",
     distSysSummary: "Kafka is a distributed append-only log with partitioned consumer groups and offset tracking. SQS is a distributed ephemeral queue with message visibility timeouts and individual message acknowledgments. In-flight messages in SQS need heartbeats; Kafka needs partition rebalancing control.",
     fidelityConnection: "Directly relates to your SQS KEDA achievement: why visibility timeouts prevent race conditions during Kubernetes scale-down.",
-    interviewTip: "Clarify whether the interviewer needs total ordering (Kafka partition) vs independent task processing (SQS). SDE-2s know exactly when to choose which."
+    interviewTip: "Clarify whether the interviewer needs total ordering (Kafka partition) vs independent task processing (SQS). Top engineers know exactly when to choose which."
   },
   {
     id: "prep-wed",

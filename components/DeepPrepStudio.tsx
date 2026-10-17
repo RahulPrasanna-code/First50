@@ -111,7 +111,7 @@ export function DeepPrepStudio({ isOpen, onClose, onCompletePrep, embedded = fal
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Curated DSA LeetCode targets + Distributed Systems patterns mapped to Tier-1 SDE-2 interview bars.
+              Curated DSA LeetCode targets + Distributed Systems patterns mapped to Tier-1 engineering interview bars.
             </p>
           </div>
         </div>
@@ -239,7 +239,7 @@ export function DeepPrepStudio({ isOpen, onClose, onCompletePrep, embedded = fal
             <div className="rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-950/10 p-2.5">
               <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-800 dark:text-amber-400 mb-0.5">
                 <HelpCircle className="h-3 w-3" />
-                <span>SDE-2 Interview Pro-Tip:</span>
+                <span>Technical Interview Pro-Tip:</span>
               </div>
               <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug">
                 {activeTopic.interviewTip}

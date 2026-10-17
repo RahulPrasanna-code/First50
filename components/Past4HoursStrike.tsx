@@ -40,10 +40,10 @@ export function Past4HoursStrike() {
       tag: "Prime MAA Strike",
     },
     {
-      title: "All-India Tier-1 SDE-1 / SDE-2 (Past 24 Hours)",
-      desc: "Fresh SDE-1/2 lateral openings nationwide before recruiter queue hits 300+.",
+      title: "All-India Tier-1 Software Engineer & Backend (Past 24 Hours)",
+      desc: "Fresh Software Engineer lateral openings nationwide before recruiter queue hits 300+.",
       location: "India",
-      keywords: "Software Engineer 2 OR SDE 1 Backend",
+      keywords: "Software Engineer OR Backend Engineer",
       timeRange: "r86400" as const,
       exp: "2,3",
       tag: "Tier-1 Lateral",
@@ -202,10 +202,10 @@ export function Past4HoursStrike() {
               </button>
               <button
                 type="button"
-                onClick={() => setCustomKeywords("Software Development Engineer 2 OR Backend Engineer")}
+                onClick={() => setCustomKeywords("Software Engineer OR Backend Engineer")}
                 className="rounded-lg bg-indigo-50 dark:bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-brand-indigo dark:text-brand-cyan border border-indigo-200 dark:border-cyan-500/30 hover:opacity-80"
               >
-                + SDE-2 Backend
+                + Backend Software Engineer
               </button>
             </div>
           </div>

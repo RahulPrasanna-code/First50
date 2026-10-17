@@ -414,7 +414,7 @@ export function ApplicationTracker({
                     required
                     value={newRoleTitle}
                     onChange={(e) => setNewRoleTitle(e.target.value)}
-                    placeholder="e.g. SDE-2 Backend"
+                    placeholder="e.g. Backend Software Engineer"
                     className="w-full rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark px-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-brand-indigo dark:focus:border-brand-cyan focus:outline-none"
                   />
                 </div>

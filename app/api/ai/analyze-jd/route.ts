@@ -163,7 +163,7 @@ ${jobDescription.slice(0, 4000)}
 
 Evaluate this JD and produce a JSON response with:
 1. "fitScore": integer from 0 to 100 reflecting stack & scope alignment.
-2. "yoeGatePassed": boolean. True if 2 YoE is acceptable or if it's SDE-1 / SDE-2. False if it strictly mandates 4+ or 5+ YoE.
+2. "yoeGatePassed": boolean. True if 2 YoE is acceptable or if it's early-career / mid-level / Software Engineer. False if it strictly mandates 4+ or 5+ YoE.
 3. "yoeGateDetails": concise string explaining the YoE evaluation and strategy.
 4. "matchingHighlights": array of 3-5 strings highlighting candidate's exact strengths matching the JD.
 5. "missingKeywords": array of 3-5 critical ATS keywords mentioned in the JD that Rahul should add to his tailored resume.

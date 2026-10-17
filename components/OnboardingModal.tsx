@@ -32,7 +32,7 @@ export function OnboardingModal({ isOpen, authUser, onComplete }: OnboardingModa
   const [totalExperience, setTotalExperience] = useState<string>("2+ Years");
   const [shiftHours, setShiftHours] = useState<string>("10:00 AM – 7:00 PM IST");
   const [targetRoles, setTargetRoles] = useState<string[]>([
-    "SDE-2",
+    "Software Engineer",
     "Backend Software Engineer",
     "Distributed Systems Engineer",
   ]);
@@ -243,9 +243,9 @@ export function OnboardingModal({ isOpen, authUser, onComplete }: OnboardingModa
                   onChange={(e) => setTotalExperience(e.target.value)}
                   className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none"
                 >
-                  <option value="1-2 Years">1–2 Years (SDE-1 / Early Career)</option>
-                  <option value="2+ Years">2+ Years (SDE-2 Candidate)</option>
-                  <option value="3-5 Years">3–5 Years (SDE-2 / Senior)</option>
+                  <option value="1-2 Years">1–2 Years (Early Career / SDE)</option>
+                  <option value="2+ Years">2+ Years (Software Engineer)</option>
+                  <option value="3-5 Years">3–5 Years (Mid-Level / Senior)</option>
                   <option value="5+ Years">5+ Years (Lead / Staff)</option>
                 </select>
               </div>

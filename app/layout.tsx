@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/lib/ThemeContext";
 
 export const metadata: Metadata = {
   title: "First50 - Modern Career Command Center",
-  description: "Minimalist AI-Powered Career Command Center & SDE-2 Application Strike Platform",
+  description: "Minimalist AI-Powered Career Command Center & Software Engineer Strike Platform",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

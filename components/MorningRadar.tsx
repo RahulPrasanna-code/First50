@@ -110,7 +110,7 @@ export function MorningRadar({
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Scans unauthenticated JSON APIs from Greenhouse & Lever (Stripe, Razorpay, Cred, Postman, Swiggy) for verified SDE-2 Backend roles.
+            Scans unauthenticated JSON APIs from Greenhouse & Lever (Stripe, Razorpay, Cred, Postman, Swiggy) for verified Backend & Software Engineering roles.
           </p>
         </div>
 

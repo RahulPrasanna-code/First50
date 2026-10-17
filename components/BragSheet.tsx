@@ -109,7 +109,7 @@ export function BragSheet({ items, onSaveItem, onDeleteItem }: BragSheetProps) {
               <Award className="h-4 w-4" />
             </div>
             <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              Production Brag Sheet & SDE-2 Interview Story Bank
+              Production Brag Sheet & Technical Interview Story Bank
             </h2>
             <span className="rounded-full bg-amber-50 dark:bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30">
               STAR Format Engine
