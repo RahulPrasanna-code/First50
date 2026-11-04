@@ -14,6 +14,7 @@ import {
   Application,
   ScrapedJob,
   BragItem,
+  GeneratedResume,
 } from "@/types";
 import {
   SEED_PROFILE,
@@ -36,6 +37,7 @@ const STORAGE_KEYS = {
   JOBS: "first50_scraped_jobs",
   APPLICATIONS: "first50_applications",
   BRAG_SHEET: "first50_brag_sheet",
+  RESUMES: "first50_generated_resumes",
 };
 
 // Check if running on client
@@ -454,3 +456,73 @@ export async function deleteBragItem(
 
   return updated;
 }
+
+// ==========================================
+// 7. GENERATED RESUMES (LLM CHAINED)
+// ==========================================
+export async function getGeneratedResumes(userId?: string | null): Promise<GeneratedResume[]> {
+  if (isFirebaseConfigured && db && userId) {
+    try {
+      const snap = await getDocs(collection(db, "users", userId, "generatedResumes"));
+      if (!snap.empty) {
+        const resumes: GeneratedResume[] = [];
+        snap.forEach((d) => resumes.push(d.data() as GeneratedResume));
+        setLocal(STORAGE_KEYS.RESUMES, resumes);
+        return resumes;
+      }
+    } catch (e) {
+      console.warn("Firestore getGeneratedResumes failed, falling back to local:", e);
+    }
+  }
+
+  return getLocal<GeneratedResume[]>(STORAGE_KEYS.RESUMES, []);
+}
+
+export async function saveGeneratedResume(
+  resume: GeneratedResume,
+  userId?: string | null
+): Promise<GeneratedResume[]> {
+  const current = await getGeneratedResumes(userId);
+  const existingIdx = current.findIndex((r) => r.id === resume.id);
+  let updated: GeneratedResume[];
+  if (existingIdx >= 0) {
+    updated = [...current];
+    updated[existingIdx] = resume;
+  } else {
+    updated = [resume, ...current];
+  }
+
+  setLocal(STORAGE_KEYS.RESUMES, updated);
+
+  if (isFirebaseConfigured && db && userId) {
+    try {
+      const ref = doc(db, "users", userId, "generatedResumes", resume.id);
+      await setDoc(ref, resume, { merge: true });
+    } catch (e) {
+      console.warn("Firestore saveGeneratedResume failed:", e);
+    }
+  }
+
+  return updated;
+}
+
+export async function deleteGeneratedResume(
+  resumeId: string,
+  userId?: string | null
+): Promise<GeneratedResume[]> {
+  const current = await getGeneratedResumes(userId);
+  const updated = current.filter((r) => r.id !== resumeId);
+  setLocal(STORAGE_KEYS.RESUMES, updated);
+
+  if (isFirebaseConfigured && db && userId) {
+    try {
+      const ref = doc(db, "users", userId, "generatedResumes", resumeId);
+      await deleteDoc(ref);
+    } catch (e) {
+      console.warn("Firestore deleteGeneratedResume failed:", e);
+    }
+  }
+
+  return updated;
+}
+

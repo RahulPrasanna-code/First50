@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { Radar, Zap, Code2, Send, Award, User as UserIcon } from "lucide-react";
+import { Radar, Zap, Code2, Send, FileText, User as UserIcon } from "lucide-react";
 
 interface MobileDockProps {
-  activeTab: "radar" | "strike" | "pitch" | "pipeline" | "brag" | "prep";
-  onTabChange: (tab: "radar" | "strike" | "pitch" | "pipeline" | "brag" | "prep") => void;
+  activeTab: "radar" | "strike" | "pitch" | "resume" | "pipeline" | "brag" | "prep";
+  onTabChange: (tab: "radar" | "strike" | "pitch" | "resume" | "pipeline" | "brag" | "prep") => void;
   onOpenProfile: () => void;
 }
 
@@ -65,6 +65,19 @@ export function MobileDock({ activeTab, onTabChange, onOpenProfile }: MobileDock
       >
         <Send className="h-5 w-5" />
         <span>Pitches</span>
+      </button>
+
+      {/* Tab 5: Resume */}
+      <button
+        onClick={() => onTabChange("resume")}
+        className={`flex flex-col items-center gap-1 transition ${
+          activeTab === "resume"
+            ? "font-bold text-brand-indigo dark:text-brand-cyan"
+            : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+        }`}
+      >
+        <FileText className="h-5 w-5" />
+        <span>Resume</span>
       </button>
 
       {/* Tab 5: Profile / Settings */}

@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { Radar, Zap, Code2, Send, Layers, Award, AlertTriangle } from "lucide-react";
+import { Radar, Zap, Code2, Send, Layers, Award, AlertTriangle, FileText } from "lucide-react";
 
 interface DesktopNavProps {
-  activeTab: "radar" | "strike" | "pitch" | "pipeline" | "brag" | "prep";
-  onTabChange: (tab: "radar" | "strike" | "pitch" | "pipeline" | "brag" | "prep") => void;
+  activeTab: "radar" | "strike" | "pitch" | "resume" | "pipeline" | "brag" | "prep";
+  onTabChange: (tab: "radar" | "strike" | "pitch" | "resume" | "pipeline" | "brag" | "prep") => void;
   radarCount: number;
   pipelineCount: number;
   bragCount: number;
@@ -103,6 +103,26 @@ export function DesktopNav({
               : "bg-purple-500/15 text-purple-600 dark:text-purple-400"
           }`}>
             AI
+          </span>
+        </button>
+
+        {/* Tab 5: AI Resume Studio */}
+        <button
+          onClick={() => onTabChange("resume")}
+          className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 font-bold transition-all ${
+            activeTab === "resume"
+              ? "bg-brand-indigo dark:bg-brand-cyan text-white dark:text-slate-950 shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:bg-subsurface-light dark:hover:bg-subsurface-dark hover:text-slate-900 dark:hover:text-slate-100"
+          }`}
+        >
+          <FileText className="h-4 w-4" />
+          <span>Resume Studio</span>
+          <span className={`rounded px-1.5 py-0.2 text-[9px] font-mono ${
+            activeTab === "resume"
+              ? "bg-white/20 text-white dark:text-slate-950"
+              : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+          }`}>
+            Chain
           </span>
         </button>
 

@@ -9,6 +9,7 @@ import { DailyRoutine } from "@/components/DailyRoutine";
 import { MorningRadar } from "@/components/MorningRadar";
 import { Past4HoursStrike } from "@/components/Past4HoursStrike";
 import { PitchStudio } from "@/components/PitchStudio";
+import { ResumeStudio } from "@/components/ResumeStudio";
 import { ApplicationTracker } from "@/components/ApplicationTracker";
 import { ProfileModal } from "@/components/ProfileModal";
 import { BragSheet } from "@/components/BragSheet";
@@ -86,7 +87,7 @@ export default function Home() {
   const [bragItems, setBragItems] = useState<BragItem[]>([]);
 
   // UI State
-  const [activeTab, setActiveTab] = useState<"radar" | "strike" | "pitch" | "pipeline" | "brag" | "prep">("radar");
+  const [activeTab, setActiveTab] = useState<"radar" | "strike" | "pitch" | "resume" | "pipeline" | "brag" | "prep">("radar");
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
   const [isPrepStudioOpen, setIsPrepStudioOpen] = useState<boolean>(false);
@@ -525,6 +526,19 @@ export default function Home() {
             <PitchStudio
               profile={profile}
               onSaveToPipeline={handleSaveCustomToPipeline}
+            />
+          )}
+
+          {activeTab === "resume" && (
+            <ResumeStudio
+              profile={profile}
+              bragItems={bragItems}
+              scrapedJobs={scrapedJobs}
+              applications={applications}
+              onNavigateToPitch={(company, role) => {
+                setActiveTab("pitch");
+              }}
+              onShowToast={showToast}
             />
           )}
 
