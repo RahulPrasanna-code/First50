@@ -7,6 +7,7 @@ import {
   ResumeGenerationResult,
   UserProfile,
   BragItem,
+  ExtractedInterviewData,
 } from "@/types";
 import { SEED_PROFILE, RAHUL_PRIVATE_BRAG_ITEMS } from "@/data/seed";
 
@@ -18,6 +19,8 @@ interface GenerateResumeRequest {
   targetRole?: string;
   profile?: UserProfile;
   bragItems?: BragItem[];
+  existingResumeText?: string;
+  extractedData?: ExtractedInterviewData;
   maxIterations?: number;
 }
 
@@ -69,7 +72,8 @@ function generateHeuristicResume(
   tokens: ReturnType<typeof extractTokensHeuristic>,
   profile: UserProfile,
   bragList: BragItem[],
-  critiqueNotes: string[] = []
+  critiqueNotes: string[] = [],
+  extractedData?: ExtractedInterviewData
 ): GeneratedResume {
   const topSkills = profile.skills || [
     "Java 17/21", "Spring Boot", "Distributed Systems", "AWS",
@@ -89,6 +93,13 @@ function generateHeuristicResume(
     "Engineered multi-region active-active backend pipeline leveraging AWS Multi-Region Access Points (MRAP) with automated failover and AI-assisted health telemetry.",
   ];
 
+  // If user provided additional metrics during interactive interview chat, inject them!
+  if (extractedData?.additionalAchievements && extractedData.additionalAchievements.length > 0) {
+    extractedData.additionalAchievements.forEach((ach) => {
+      bulletsExp1.unshift(ach);
+    });
+  }
+
   // If critique asks for specific emphasis, prioritize relevant achievements
   if (critiqueNotes.some((n) => n.toLowerCase().includes("kafka") || n.toLowerCase().includes("streaming"))) {
     bulletsExp1.unshift(
@@ -106,8 +117,8 @@ function generateHeuristicResume(
       email: profile.email || "prasannarahul22@gmail.com",
       phone: "+91 94891 04224",
       location: "Bengaluru, India",
-      linkedin: "linkedin.com/in/rahul-prasanna",
-      github: "github.com/RahulPrasanna-code",
+      linkedin: extractedData?.linkedinUrl || "linkedin.com/in/rahul-prasanna",
+      github: extractedData?.githubUrl || "github.com/RahulPrasanna-code",
     },
     professionalSummary: summary,
     coreSkills: {
@@ -227,6 +238,8 @@ export async function POST(req: Request) {
       targetRole = "",
       profile = SEED_PROFILE,
       bragItems = RAHUL_PRIVATE_BRAG_ITEMS,
+      existingResumeText = "",
+      extractedData,
       maxIterations = 2,
     } = body;
 
@@ -300,13 +313,25 @@ Return ONLY a raw JSON object with this exact structure (no markdown, no backtic
           summary: "Mapping candidate's real production metrics (2.1B+ communications, 90% latency reduction) to target company tech requirements.",
         });
 
+        const allAchievements = [
+          ...profile.achievements,
+          ...(extractedData?.additionalAchievements || []),
+        ];
+
         const candidateContext = {
           name: profile.name,
           currentRole: profile.currentRole,
           company: profile.company,
           totalExperience: profile.totalExperience,
-          skills: profile.skills,
-          achievements: profile.achievements,
+          skills: Array.from(new Set([...profile.skills, ...(extractedData?.additionalSkills || [])])),
+          achievements: allAchievements,
+          priorResumeExcerpts: existingResumeText ? existingResumeText.slice(0, 2000) : undefined,
+          interviewClarifications: extractedData?.additionalAchievements || [],
+          verifiedLinks: {
+            github: extractedData?.githubUrl || "github.com/RahulPrasanna-code",
+            linkedin: extractedData?.linkedinUrl || "linkedin.com/in/rahul-prasanna",
+            portfolio: extractedData?.portfolioUrl,
+          },
           bragHighlights: bragItems.slice(0, 5).map((b) => ({
             title: b.title,
             metric: b.metric,
@@ -394,8 +419,8 @@ Return ONLY a raw JSON object with this EXACT structure (no markdown, no backtic
     "email": "${profile.email || "prasannarahul22@gmail.com"}",
     "phone": "+91 94891 04224",
     "location": "Bengaluru, India",
-    "linkedin": "linkedin.com/in/rahul-prasanna",
-    "github": "github.com/RahulPrasanna-code"
+    "linkedin": "${extractedData?.linkedinUrl || "linkedin.com/in/rahul-prasanna"}",
+    "github": "${extractedData?.githubUrl || "github.com/RahulPrasanna-code"}"
   },
   "professionalSummary": string,
   "coreSkills": {
@@ -604,7 +629,7 @@ Return ONLY a raw JSON object (no markdown, no backticks).
       },
     ];
 
-    let fallbackResume = generateHeuristicResume(jobDescription, tokens, profile, bragItems);
+    let fallbackResume = generateHeuristicResume(jobDescription, tokens, profile, bragItems, [], extractedData);
     let fallbackEval = evaluateResumeHeuristic(fallbackResume, jobDescription, tokens, 1);
 
     fallbackChainHistory.push({
@@ -627,7 +652,7 @@ Return ONLY a raw JSON object (no markdown, no backticks).
         summary: "Injected missing keywords and elevated high-throughput streaming accomplishments.",
       });
 
-      fallbackResume = generateHeuristicResume(jobDescription, tokens, profile, bragItems, fallbackEval.critiqueNotes);
+      fallbackResume = generateHeuristicResume(jobDescription, tokens, profile, bragItems, fallbackEval.critiqueNotes, extractedData);
       fallbackEval = evaluateResumeHeuristic(fallbackResume, jobDescription, tokens, 2);
     }
 

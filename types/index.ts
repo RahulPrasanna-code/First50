@@ -208,3 +208,28 @@ export interface ResumeGenerationResult {
   source: "gemini-llm-chain" | "heuristic-chain";
 }
 
+// ==========================================
+// INTERACTIVE INFORMATION-COLLECTING CHAT TYPES
+// ==========================================
+
+export interface ResumeChatMessage {
+  id: string;
+  sender: "assistant" | "user";
+  text: string;
+  timestamp: string;
+  suggestedActions?: {
+    label: string;
+    payload?: string;
+  }[];
+}
+
+export interface ExtractedInterviewData {
+  githubUrl?: string;
+  linkedinUrl?: string;
+  portfolioUrl?: string;
+  additionalSkills: string[];
+  additionalAchievements: string[];
+  gapNotes: string[];
+}
+
+
