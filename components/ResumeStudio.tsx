@@ -14,6 +14,7 @@ import {
   Share2,
   Check,
   ChevronRight,
+  ChevronLeft,
   ExternalLink,
   ShieldCheck,
   Layers,
@@ -103,32 +104,39 @@ export function ResumeStudio({
   onNavigateToPitch,
   onShowToast,
 }: ResumeStudioProps) {
-  // Navigation / Input Tabs in Left Panel
-  const [leftTab, setLeftTab] = useState<"jd" | "upload" | "chat">("jd");
+  // ==========================================
+  // PROGRESSIVE 4-STEP WIZARD STATE
+  // Step 1: Target JD Input
+  // Step 2: Existing Resume Collection
+  // Step 3: AI Gap Analysis & Interactive Interview
+  // Step 4: Iterative LLM Generation & Output
+  // ==========================================
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4>(1);
 
-  // Input State: Target JD
+  // Stage 1: Target JD State
   const [targetCompany, setTargetCompany] = useState<string>("Razorpay");
   const [targetRole, setTargetRole] = useState<string>("Backend Software Engineer");
   const [jobDescription, setJobDescription] = useState<string>(SAMPLE_JDS[0].jd);
 
-  // Input State: Existing Resume
+  // Stage 2: Existing Resume State
   const defaultExistingResume = `Rahul Prasanna T S
 Software Engineer at Fidelity Investments India (Communications Orchestration Platform)
 Experience: 2+ Years in Java 17/21, Spring Boot, AWS, Kubernetes, KEDA, PostgreSQL.
 Achievements:
-- Scaled platform to process 2.1B+ annual communications, retiring legacy mainframes.
+- Scaled platform to process 2.1B+ annual communications, retiring legacy mainframes with cloud microservices.
 - Cut backend batch execution time by 90% (under 2 hours) via parallelized Kubernetes worker model.
-- Reduced PostgreSQL batch insert runtimes by 67% with partitioned summary tables and index pruning.
-- Fixed KEDA AWS SQS scale-down race condition eliminating data loss.
-- Built multi-region active-active backend on AWS MRAP.`;
+- Reduced PostgreSQL batch insert runtimes by 67% with partitioned summary tables and GIN index pruning.
+- Fixed KEDA AWS SQS scale-down race condition eliminating data loss during Kubernetes autoscaling.
+- Built multi-region active-active backend on AWS MRAP with automatic failover.`;
 
   const [existingResumeText, setExistingResumeText] = useState<string>(defaultExistingResume);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
-  // Interactive Information Collecting Chat State
+  // Stage 3: Interactive Interview Chat State
   const [chatMessages, setChatMessages] = useState<ResumeChatMessage[]>([]);
   const [userChatInput, setUserChatInput] = useState<string>("");
   const [isChatLoading, setIsChatLoading] = useState<boolean>(false);
+  const [isInterviewUnlocked, setIsInterviewUnlocked] = useState<boolean>(false);
   const [extractedData, setExtractedData] = useState<ExtractedInterviewData>({
     githubUrl: "https://github.com/RahulPrasanna-code",
     linkedinUrl: "https://linkedin.com/in/rahul-prasanna",
@@ -138,45 +146,26 @@ Achievements:
   });
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
-  // Generation & Pipeline State
+  // Stage 4: LLM Chaining Generation & Iterations State
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [currentStep, setCurrentStep] = useState<number>(0);
   const [chainLogs, setChainLogs] = useState<ResumeChainStepLog[]>([]);
   const [generatedResume, setGeneratedResume] = useState<GeneratedResume | null>(null);
   const [evaluation, setEvaluation] = useState<ResumeAuditEvaluation | null>(null);
   const [iterationsRun, setIterationsRun] = useState<number>(1);
   const [sourceEngine, setSourceEngine] = useState<string>("");
 
-  // UI State for Preview
+  // Resume Document Viewer State
   const [activeViewTab, setActiveViewTab] = useState<"preview" | "audit" | "markdown" | "json">("preview");
   const [copiedType, setCopiedType] = useState<string | null>(null);
   const [savedResumes, setSavedResumes] = useState<GeneratedResume[]>([]);
   const [showSavedDrawer, setShowSavedDrawer] = useState<boolean>(false);
 
-  // Initialize saved resumes
+  // Load saved resumes on mount
   useEffect(() => {
     loadSavedResumes();
   }, []);
 
-  // Initialize first recruiter message when opening chat
-  useEffect(() => {
-    if (chatMessages.length === 0) {
-      setChatMessages([
-        {
-          id: "welcome-1",
-          sender: "assistant",
-          text: `👋 Hi ${profile.name?.split(" ")[0] || "there"}! I'm your **Information Collecting AI Recruiter**.\n\nI compared your background with **${targetCompany}**'s **${targetRole}** role.\n\nTo ensure our ATS score hits 90%+, let's check:\n1. **Your GitHub Link**: To showcase code quality & open-source projects.\n2. **High-Throughput Caching / Streaming**: ${targetCompany} emphasizes low-latency processing. Did you handle Kafka streaming, Redis caching, or message partitioning at Fidelity?`,
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          suggestedActions: [
-            { label: "Share GitHub Link", payload: "My GitHub is https://github.com/RahulPrasanna-code" },
-            { label: "Add Redis 5ms Caching Metric", payload: "I implemented Redis caching reducing database read pressure during 2.1B+ bursts with sub-5ms latency." },
-            { label: "Add Kafka 50M Events/Day", payload: "I architected Kafka event streaming pipelines processing 50M+ daily events with idempotency keys." },
-          ],
-        },
-      ]);
-    }
-  }, [targetCompany, targetRole]);
-
+  // Auto-scroll chat window
   useEffect(() => {
     if (chatScrollRef.current) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
@@ -193,7 +182,8 @@ Achievements:
     setTargetRole(sample.role);
     setJobDescription(sample.jd);
     setChatMessages([]);
-    onShowToast(`Loaded ${sample.company} sample Job Description.`);
+    setIsInterviewUnlocked(false);
+    onShowToast(`Loaded ${sample.company} sample requirements.`);
   };
 
   const handleSelectFromRadar = (job: ScrapedJob) => {
@@ -201,10 +191,11 @@ Achievements:
     setTargetRole(job.title);
     setJobDescription(`Role: ${job.title} at ${job.company}\nLocation: ${job.location}\nSource: ${job.source}\nRequired Skills: ${job.matchingSkills.join(", ")}\nMissing Keywords: ${job.missingKeywords.join(", ")}`);
     setChatMessages([]);
+    setIsInterviewUnlocked(false);
     onShowToast(`Imported ${job.company} opening from Morning Radar.`);
   };
 
-  // Handle Upload of Existing Resume File
+  // Step 2: Handle File Upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -216,19 +207,50 @@ Achievements:
       if (text) {
         setExistingResumeText(text);
         onShowToast(`Loaded ${file.name} (${Math.round(text.length / 5)} words).`);
-        // Switch to chat to prompt gap analysis!
-        setLeftTab("chat");
       }
     };
     reader.readAsText(file);
   };
 
-  // Send Chat Message to Information-Collecting LLM
+  // Transition to Step 3: Run Initial Diff & Greet User
+  const handleProceedToInterview = async () => {
+    if (!jobDescription || jobDescription.trim().length < 30) {
+      onShowToast("Please enter a valid Job Description first.");
+      setWizardStep(1);
+      return;
+    }
+
+    setWizardStep(3);
+
+    // If chat is empty, fire initial comparison
+    if (chatMessages.length === 0) {
+      setIsChatLoading(true);
+
+      const initialOpeningMsg: ResumeChatMessage = {
+        id: `assistant-start`,
+        sender: "assistant",
+        text: `Hello ${profile.name?.split(" ")[0] || "Rahul"}! I am your **AI Technical Recruiter & Gap Collector**.\n\nI just performed an immediate comparison between your provided resume and **${targetCompany}**'s **${targetRole}** requirements.\n\nHere are 2 high-impact items we must clarify before generating your resume:\n1. **GitHub Proof**: ATS parsers and engineering managers prioritize candidates who link their active codebase. Is your GitHub profile **https://github.com/RahulPrasanna-code** or would you like to link a specific repo?\n2. **High-Throughput Streaming & Caching**: ${targetCompany} mandates event-driven streaming and low-latency caching. Did you handle Kafka partition balancing or Redis caching at Fidelity? What throughput or latency numbers did you achieve?`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        suggestedActions: [
+          { label: "✓ Confirm GitHub: github.com/RahulPrasanna-code", payload: "My GitHub profile is https://github.com/RahulPrasanna-code" },
+          { label: "+ Add Redis 5ms Caching Metric", payload: "I implemented Redis caching reducing database read pressure during 2.1B+ communications bursts with sub-5ms lookup latency." },
+          { label: "+ Add Kafka 50M Events/Day", payload: "I designed Kafka event-streaming pipelines handling 50M+ daily events with idempotency keys." },
+          { label: "⚡ I'm Ready to Generate", payload: "READY_TO_GENERATE" },
+        ],
+      };
+
+      setChatMessages([initialOpeningMsg]);
+      setIsChatLoading(false);
+    }
+  };
+
+  // Step 3: Handle Chat Interactions
   const handleSendChatMessage = async (textToSend?: string) => {
     const text = (textToSend || userChatInput).trim();
     if (!text || isChatLoading) return;
 
     if (text === "READY_TO_GENERATE") {
+      setIsInterviewUnlocked(true);
       handleGenerate();
       return;
     }
@@ -265,67 +287,42 @@ Achievements:
         if (data.extractedData) {
           setExtractedData(data.extractedData);
         }
+        // Unlock generation button once user provides at least one response
+        setIsInterviewUnlocked(true);
       }
     } catch (err: any) {
       console.warn("Chat agent error:", err);
       onShowToast("Chat response delayed. Details still captured.");
+      setIsInterviewUnlocked(true);
     } finally {
       setIsChatLoading(false);
     }
   };
 
-  // Trigger Multi-Agent LLM Chain
+  // Step 4: Multi-Agent LLM Chaining Generation with Bar-Raiser Feedback Loop
   const handleGenerate = async () => {
     if (!jobDescription || jobDescription.trim().length < 30) {
       onShowToast("Please enter a valid Job Description first.");
-      setLeftTab("jd");
+      setWizardStep(1);
       return;
     }
 
+    setWizardStep(4);
     setIsGenerating(true);
     setGeneratedResume(null);
     setEvaluation(null);
-    setCurrentStep(1);
+
     setChainLogs([
       {
         step: 1,
-        name: "JD Deconstruction & ATS Token Extraction",
+        name: "Stage 1: Target JD Deconstruction & ATS Token Extraction",
         status: "running",
         timestamp: new Date().toLocaleTimeString(),
-        summary: "Analyzing JD requirements, parsing domain problems & extracting top ATS tokens...",
+        summary: `Deconstructing ${targetCompany} requirements and isolating high-frequency ATS tokens...`,
       },
     ]);
 
     try {
-      const stepTimer1 = setTimeout(() => {
-        setCurrentStep(2);
-        setChainLogs((prev) => [
-          { ...prev[0], status: "completed" },
-          {
-            step: 2,
-            name: "Experience Splicing & STAR Match",
-            status: "running",
-            timestamp: new Date().toLocaleTimeString(),
-            summary: "Splicing Fidelity 2.1B+ communications, chat metrics & verified links...",
-          },
-        ]);
-      }, 1200);
-
-      const stepTimer2 = setTimeout(() => {
-        setCurrentStep(3);
-        setChainLogs((prev) => [
-          prev[0],
-          { ...prev[1], status: "completed" },
-          {
-            step: 3,
-            name: "Resume Section Synthesis (Pass 1)",
-            status: "running",
-            timestamp: new Date().toLocaleTimeString(),
-            summary: "Formulating Google XYZ bullets, targeted summary & categorized skills...",
-          },
-        ]);
-      }, 2500);
-
       const res = await fetch("/api/ai/generate-resume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -341,9 +338,6 @@ Achievements:
         }),
       });
 
-      clearTimeout(stepTimer1);
-      clearTimeout(stepTimer2);
-
       const data: ResumeGenerationResult = await res.json();
 
       if (!res.ok || !(data as any).success) {
@@ -355,9 +349,8 @@ Achievements:
       setIterationsRun(data.iterationsRun);
       setSourceEngine(data.source);
       setChainLogs(data.chainHistory || []);
-      setCurrentStep(6);
 
-      // Auto-save generated resume
+      // Auto-save generated resume to local/cloud storage
       await saveGeneratedResume(data.resume);
       loadSavedResumes();
 
@@ -447,7 +440,7 @@ ${r.education
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
+      {/* Top Header Banner */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-5 shadow-xs transition-colors">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -455,14 +448,14 @@ ${r.education
               <FileText className="h-5 w-5" />
             </div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              AI Resume Studio & Interview Assistant
+              AI Resume Studio — Guided Step-by-Step Chaining
             </h2>
             <span className="rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
-              Interactive Gap Collector
+              Sequential Multi-Agent
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
-            Upload or paste your existing resume, chat with the AI Recruiter to fill critical metrics and links, then run the multi-agent LLM chain with a self-correcting Bar-Raiser Evaluator loop.
+            A guided 4-step pipeline: Provide the Target JD ➔ Supply your existing resume ➔ Clarify missing links & metrics via AI Chat ➔ Generate with self-correcting Bar-Raiser Evaluator iterations.
           </p>
         </div>
 
@@ -489,9 +482,9 @@ ${r.education
         </div>
       </div>
 
-      {/* Saved Resumes Mini Tray (Expandable) */}
+      {/* Saved Resumes Drawer */}
       {showSavedDrawer && (
-        <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-4 space-y-3">
+        <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-4 space-y-3 animate-fadeIn">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Saved Tailored Resumes
@@ -515,6 +508,7 @@ ${r.education
                     setGeneratedResume(r);
                     setTargetCompany(r.targetCompany);
                     setTargetRole(r.targetRole);
+                    setWizardStep(4);
                     setShowSavedDrawer(false);
                     onShowToast(`Loaded resume for ${r.targetCompany}`);
                   }}
@@ -538,500 +532,506 @@ ${r.education
         </div>
       )}
 
-      {/* Main Two-Column Layout */}
+      {/* =========================================================================
+          PROGRESSIVE 4-STEP WIZARD PROGRESS TRACKER
+      ========================================================================= */}
+      <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-3 shadow-xs">
+        <div className="grid grid-cols-4 gap-2 text-xs">
+          {[
+            { step: 1, title: "1. Target JD", desc: "Define role & requirements" },
+            { step: 2, title: "2. My Resume", desc: "Upload / paste background" },
+            { step: 3, title: "3. Gap Interview", desc: "AI recruiter Q&A" },
+            { step: 4, title: "4. LLM Synthesis", desc: "Iterative Bar-Raiser pass" },
+          ].map((s) => {
+            const isCurrent = wizardStep === s.step;
+            const isCompleted = wizardStep > s.step || (s.step === 4 && generatedResume !== null);
+
+            return (
+              <button
+                key={s.step}
+                type="button"
+                onClick={() => {
+                  // Allow navigating backwards or forwards if valid
+                  if (s.step <= wizardStep || (s.step === 3 && existingResumeText)) {
+                    setWizardStep(s.step as any);
+                  }
+                }}
+                className={`flex flex-col text-left p-2.5 rounded-xl border transition ${
+                  isCurrent
+                    ? "border-brand-indigo dark:border-brand-cyan bg-indigo-50/60 dark:bg-cyan-500/10 font-bold"
+                    : isCompleted
+                    ? "border-emerald-300 dark:border-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-500/5 text-slate-700 dark:text-slate-300"
+                    : "border-transparent text-slate-400 dark:text-slate-600 opacity-60 cursor-not-allowed"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-bold ${isCurrent ? "text-brand-indigo dark:text-brand-cyan" : ""}`}>
+                    {s.title}
+                  </span>
+                  {isCompleted && <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />}
+                </div>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{s.desc}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* =========================================================================
+          MAIN WORKSPACE (LEFT COLUMN: WIZARD STEP; RIGHT COLUMN: PREVIEW / AUDIT)
+      ========================================================================= */}
       <div className="grid gap-6 lg:grid-cols-12 items-start">
-        {/* =========================================================================
-            LEFT COLUMN (5 Cols): TABBED INPUT (TARGET JD / MY RESUME / CHAT)
-        ========================================================================= */}
+        
+        {/* LEFT COLUMN: GUIDED STEP-BY-STEP CONTROLS (5 Cols) */}
         <div className="lg:col-span-5 space-y-5">
-          <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-5 shadow-xs space-y-4">
-            
-            {/* 3-Tab Selector: [Target JD] [My Resume] [💬 AI Recruiter Chat] */}
-            <div className="grid grid-cols-3 gap-1 rounded-xl bg-subsurface-light dark:bg-subsurface-dark p-1 text-xs">
-              <button
-                type="button"
-                onClick={() => setLeftTab("jd")}
-                className={`flex items-center justify-center gap-1.5 rounded-lg py-1.5 font-bold transition ${
-                  leftTab === "jd"
-                    ? "bg-brand-indigo dark:bg-brand-cyan text-white dark:text-slate-950 shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-                }`}
-              >
-                <Target className="h-3.5 w-3.5" />
-                <span>1. Target JD</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setLeftTab("upload")}
-                className={`flex items-center justify-center gap-1.5 rounded-lg py-1.5 font-bold transition ${
-                  leftTab === "upload"
-                    ? "bg-brand-indigo dark:bg-brand-cyan text-white dark:text-slate-950 shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-                }`}
-              >
-                <UploadCloud className="h-3.5 w-3.5" />
-                <span>2. My Resume</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setLeftTab("chat")}
-                className={`flex items-center justify-center gap-1.5 rounded-lg py-1.5 font-bold transition relative ${
-                  leftTab === "chat"
-                    ? "bg-brand-indigo dark:bg-brand-cyan text-white dark:text-slate-950 shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-                }`}
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                <span>3. AI Chat</span>
-                {extractedData.additionalAchievements.length > 0 && (
-                  <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                )}
-              </button>
-            </div>
-
-            {/* TAB A: TARGET JD INPUT */}
-            {leftTab === "jd" && (
-              <div className="space-y-3.5 animate-fadeIn">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Role & Job Description
-                  </span>
-                  <div className="flex items-center gap-1.5 text-[10px]">
-                    <span className="text-slate-400">Sample:</span>
-                    {SAMPLE_JDS.map((s) => (
-                      <button
-                        key={s.company}
-                        type="button"
-                        onClick={() => handleSelectSample(s)}
-                        className="rounded bg-subsurface-light dark:bg-subsurface-dark px-2 py-0.5 font-semibold text-slate-700 dark:text-slate-300 hover:text-brand-indigo dark:hover:text-brand-cyan border border-hairline-light dark:border-hairline-dark transition"
-                      >
-                        {s.company}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Scraped Jobs from Morning Radar */}
-                {scrapedJobs.length > 0 && (
-                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px] scrollbar-none">
-                    <span className="text-slate-400 shrink-0">From Radar:</span>
-                    {scrapedJobs.slice(0, 3).map((job) => (
-                      <button
-                        key={job.id}
-                        type="button"
-                        onClick={() => handleSelectFromRadar(job)}
-                        className="shrink-0 rounded-lg bg-indigo-50 dark:bg-cyan-500/10 px-2 py-0.5 font-medium text-brand-indigo dark:text-brand-cyan border border-indigo-200 dark:border-cyan-500/30 hover:opacity-80 transition"
-                      >
-                        {job.company} · {job.title.slice(0, 16)}...
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Target Company
-                    </label>
-                    <input
-                      type="text"
-                      value={targetCompany}
-                      onChange={(e) => setTargetCompany(e.target.value)}
-                      placeholder="e.g. Razorpay, Swiggy"
-                      className="w-full rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark px-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-brand-indigo dark:focus:border-brand-cyan focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Role Title
-                    </label>
-                    <input
-                      type="text"
-                      value={targetRole}
-                      onChange={(e) => setTargetRole(e.target.value)}
-                      placeholder="e.g. Backend Software Engineer"
-                      className="w-full rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark px-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-brand-indigo dark:focus:border-brand-cyan focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Job Description (Paste Requirements)
-                  </label>
-                  <textarea
-                    rows={8}
-                    value={jobDescription}
-                    onChange={(e) => setJobDescription(e.target.value)}
-                    placeholder="Paste the target job description here..."
-                    className="w-full rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 font-mono leading-relaxed focus:border-brand-indigo dark:focus:border-brand-cyan focus:outline-none resize-none"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between text-xs pt-1">
-                  <span className="text-slate-500">Step 1 complete</span>
-                  <button
-                    type="button"
-                    onClick={() => setLeftTab("chat")}
-                    className="flex items-center gap-1 font-bold text-brand-indigo dark:text-brand-cyan hover:underline"
-                  >
-                    <span>Proceed to Gap Interview Chat</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
+          
+          {/* =====================================================================
+              STAGE 1: TARGET JOB DESCRIPTION
+          ===================================================================== */}
+          {wizardStep === 1 && (
+            <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-5 shadow-xs space-y-4 animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-hairline-light dark:border-hairline-dark pb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <Target className="h-4 w-4 text-brand-indigo dark:text-brand-cyan" />
+                  Step 1: Target Job Description
+                </span>
+                <div className="flex items-center gap-1 text-[10px]">
+                  <span className="text-slate-400">Presets:</span>
+                  {SAMPLE_JDS.map((s) => (
+                    <button
+                      key={s.company}
+                      type="button"
+                      onClick={() => handleSelectSample(s)}
+                      className="rounded bg-subsurface-light dark:bg-subsurface-dark px-2 py-0.5 font-semibold text-slate-700 dark:text-slate-300 hover:text-brand-indigo dark:hover:text-brand-cyan border border-hairline-light dark:border-hairline-dark transition"
+                    >
+                      {s.company}
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
 
-            {/* TAB B: UPLOAD / PASTE EXISTING RESUME */}
-            {leftTab === "upload" && (
-              <div className="space-y-3.5 animate-fadeIn">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Existing Resume Source
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setExistingResumeText(defaultExistingResume);
-                      setUploadedFileName(null);
-                      onShowToast("Reset to default Fidelity profile credentials.");
-                    }}
-                    className="text-[10px] font-semibold text-brand-indigo dark:text-brand-cyan hover:underline"
-                  >
-                    Reset to Fidelity Default
-                  </button>
+              {/* Scraped Jobs from Radar */}
+              {scrapedJobs.length > 0 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px] scrollbar-none">
+                  <span className="text-slate-400 shrink-0">Radar Leads:</span>
+                  {scrapedJobs.slice(0, 3).map((job) => (
+                    <button
+                      key={job.id}
+                      type="button"
+                      onClick={() => handleSelectFromRadar(job)}
+                      className="shrink-0 rounded-lg bg-indigo-50 dark:bg-cyan-500/10 px-2 py-0.5 font-medium text-brand-indigo dark:text-brand-cyan border border-indigo-200 dark:border-cyan-500/30 hover:opacity-80 transition"
+                    >
+                      {job.company} · {job.title.slice(0, 16)}...
+                    </button>
+                  ))}
                 </div>
+              )}
 
-                {/* Upload Box */}
-                <div className="rounded-xl border border-dashed border-indigo-200 dark:border-cyan-500/30 bg-indigo-50/30 dark:bg-cyan-500/5 p-4 text-center">
-                  <UploadCloud className="h-6 w-6 mx-auto text-brand-indigo dark:text-brand-cyan mb-1.5" />
-                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                    {uploadedFileName ? `Loaded: ${uploadedFileName}` : "Upload Existing Resume Text / Doc"}
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Supports .txt, .md, and raw resume exports
-                  </p>
-                  <label className="mt-2.5 inline-flex items-center gap-1.5 cursor-pointer rounded-xl bg-brand-indigo dark:bg-brand-cyan px-3 py-1.5 text-xs font-bold text-white dark:text-slate-950 shadow-xs hover:opacity-95 transition">
-                    <span>Browse File</span>
-                    <input
-                      type="file"
-                      accept=".txt,.md,.json"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Or Paste Existing Resume Text
+                    Target Company
                   </label>
-                  <textarea
-                    rows={8}
-                    value={existingResumeText}
-                    onChange={(e) => setExistingResumeText(e.target.value)}
-                    placeholder="Paste your current resume content here..."
-                    className="w-full rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 font-mono leading-relaxed focus:border-brand-indigo dark:focus:border-brand-cyan focus:outline-none resize-none"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between text-xs pt-1">
-                  <span className="text-slate-500">
-                    {existingResumeText.length > 50 ? "✓ Resume Context Active" : "No text added"}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setLeftTab("chat")}
-                    className="flex items-center gap-1 font-bold text-brand-indigo dark:text-brand-cyan hover:underline"
-                  >
-                    <span>Run Gap Analysis Chat</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* TAB C: INTERACTIVE INFORMATION-COLLECTING CHAT */}
-            {leftTab === "chat" && (
-              <div className="space-y-3 animate-fadeIn">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                    <Bot className="h-3.5 w-3.5 text-brand-indigo dark:text-brand-cyan" />
-                    Gap Collector Assistant
-                  </span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                    Comparing vs {targetCompany}
-                  </span>
-                </div>
-
-                {/* Extracted Ammunition Badges */}
-                <div className="rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-2.5 space-y-1.5 text-[11px]">
-                  <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold">
-                    <span>Captured Context</span>
-                    <span className="text-brand-indigo dark:text-brand-cyan">Feeds Step 2 & 3 Chain</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {extractedData.githubUrl && (
-                      <span className="flex items-center gap-1 rounded bg-white dark:bg-slate-800 px-2 py-0.5 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
-                        <Check className="h-3 w-3" /> GitHub: {extractedData.githubUrl.replace("https://", "")}
-                      </span>
-                    )}
-                    {extractedData.additionalAchievements.length > 0 && (
-                      <span className="flex items-center gap-1 rounded bg-white dark:bg-slate-800 px-2 py-0.5 text-brand-indigo dark:text-brand-cyan border border-indigo-200 dark:border-cyan-500/30">
-                        <Zap className="h-3 w-3" /> {extractedData.additionalAchievements.length} Spliced Metric(s)
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Chat Scroll Container */}
-                <div
-                  ref={chatScrollRef}
-                  className="h-64 overflow-y-auto rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light/40 dark:bg-subsurface-dark/40 p-3 space-y-3 text-xs"
-                >
-                  {chatMessages.map((msg) => {
-                    const isAssistant = msg.sender === "assistant";
-                    return (
-                      <div
-                        key={msg.id}
-                        className={`flex gap-2.5 ${isAssistant ? "items-start" : "items-start flex-row-reverse"}`}
-                      >
-                        <div
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                            isAssistant
-                              ? "bg-brand-indigo/15 dark:bg-brand-cyan/20 text-brand-indigo dark:text-brand-cyan"
-                              : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
-                          }`}
-                        >
-                          {isAssistant ? <Bot className="h-3.5 w-3.5" /> : <UserIcon className="h-3.5 w-3.5" />}
-                        </div>
-
-                        <div className={`space-y-1.5 max-w-[85%]`}>
-                          <div
-                            className={`rounded-2xl p-3 leading-relaxed whitespace-pre-line ${
-                              isAssistant
-                                ? "bg-white dark:bg-[#070E1A] text-slate-800 dark:text-slate-200 border border-hairline-light dark:border-hairline-dark shadow-2xs"
-                                : "bg-brand-indigo dark:bg-brand-cyan text-white dark:text-slate-950 font-medium"
-                            }`}
-                          >
-                            {msg.text}
-                          </div>
-
-                          {/* Quick Action Suggestion Chips */}
-                          {isAssistant && msg.suggestedActions && msg.suggestedActions.length > 0 && (
-                            <div className="flex flex-wrap gap-1 pt-1">
-                              {msg.suggestedActions.map((action, aIdx) => (
-                                <button
-                                  key={aIdx}
-                                  type="button"
-                                  onClick={() => handleSendChatMessage(action.payload || action.label)}
-                                  className="rounded-lg border border-indigo-200 dark:border-cyan-500/30 bg-indigo-50/80 dark:bg-cyan-500/10 px-2 py-1 text-[11px] font-semibold text-brand-indigo dark:text-brand-cyan hover:opacity-90 transition active:scale-95"
-                                >
-                                  {action.label}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {isChatLoading && (
-                    <div className="flex items-center gap-2 text-slate-400 text-xs italic">
-                      <Bot className="h-4 w-4 animate-spin text-brand-indigo dark:text-brand-cyan" />
-                      <span>Analyzing gaps and formulating question...</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Chat Input Bar */}
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSendChatMessage();
-                  }}
-                  className="flex items-center gap-2"
-                >
                   <input
                     type="text"
-                    value={userChatInput}
-                    onChange={(e) => setUserChatInput(e.target.value)}
-                    placeholder="e.g. My GitHub is github.com/user, and I scaled Kafka to 50M events..."
-                    className="flex-1 rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark px-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-brand-indigo dark:focus:border-brand-cyan focus:outline-none"
+                    value={targetCompany}
+                    onChange={(e) => setTargetCompany(e.target.value)}
+                    placeholder="e.g. Razorpay, Swiggy"
+                    className="w-full rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark px-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-brand-indigo dark:focus:border-brand-cyan focus:outline-none"
                   />
-                  <button
-                    type="submit"
-                    disabled={!userChatInput.trim() || isChatLoading}
-                    className="rounded-xl bg-brand-indigo dark:bg-brand-cyan p-2 text-white dark:text-slate-950 disabled:opacity-40 transition shadow-xs"
-                  >
-                    <SendHorizontal className="h-4 w-4" />
-                  </button>
-                </form>
-              </div>
-            )}
+                </div>
 
-            {/* Launch LLM Chaining Generation Button */}
-            <div className="pt-2 border-t border-hairline-light dark:border-hairline-dark">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Target Role Title
+                  </label>
+                  <input
+                    type="text"
+                    value={targetRole}
+                    onChange={(e) => setTargetRole(e.target.value)}
+                    placeholder="e.g. Backend Software Engineer"
+                    className="w-full rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark px-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-brand-indigo dark:focus:border-brand-cyan focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Job Description / Core Requirements
+                </label>
+                <textarea
+                  rows={9}
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value)}
+                  placeholder="Paste the target job description here..."
+                  className="w-full rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 font-mono leading-relaxed focus:border-brand-indigo dark:focus:border-brand-cyan focus:outline-none resize-none"
+                />
+              </div>
+
               <button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-indigo dark:bg-brand-cyan px-4 py-3 text-xs font-bold text-white dark:text-slate-950 shadow-md hover:opacity-95 transition-all disabled:opacity-50 active:scale-[0.99]"
+                type="button"
+                onClick={() => {
+                  if (!jobDescription || jobDescription.trim().length < 30) {
+                    onShowToast("Please enter a valid Job Description first.");
+                    return;
+                  }
+                  setWizardStep(2);
+                  onShowToast("Step 1 complete! Now review or upload your resume.");
+                }}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-indigo dark:bg-brand-cyan px-4 py-3 text-xs font-bold text-white dark:text-slate-950 shadow-md hover:opacity-95 transition active:scale-[0.99]"
               >
-                <Sparkles className={`h-4 w-4 ${isGenerating ? "animate-spin" : ""}`} />
-                <span>
-                  {isGenerating
-                    ? "Orchestrating LLM Chain & Auditor..."
-                    : `Generate Tailored Resume for ${targetCompany}`}
-                </span>
+                <span>Continue to Step 2: Upload / Provide Resume</span>
+                <ArrowRight className="h-4 w-4" />
               </button>
             </div>
-          </div>
+          )}
 
-          {/* =========================================================================
-              LLM CHAINING & EVALUATOR TELEMETRY CARD
-          ========================================================================= */}
-          <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-5 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Cpu className="h-4 w-4 text-brand-indigo dark:text-brand-cyan" />
-                Orchestrator Chain Telemetry
-              </span>
-
-              {evaluation && (
-                <span className="rounded-full bg-indigo-50 dark:bg-cyan-500/10 px-2 py-0.5 text-[10px] font-mono font-bold text-brand-indigo dark:text-brand-cyan border border-indigo-200 dark:border-cyan-500/30">
-                  {iterationsRun} Iteration(s) Run
+          {/* =====================================================================
+              STAGE 2: EXISTING RESUME COLLECTION
+          ===================================================================== */}
+          {wizardStep === 2 && (
+            <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-5 shadow-xs space-y-4 animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-hairline-light dark:border-hairline-dark pb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <UploadCloud className="h-4 w-4 text-brand-indigo dark:text-brand-cyan" />
+                  Step 2: Existing Resume Source
                 </span>
-              )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExistingResumeText(defaultExistingResume);
+                    setUploadedFileName(null);
+                    onShowToast("Reset to default Fidelity profile credentials.");
+                  }}
+                  className="text-[10px] font-semibold text-brand-indigo dark:text-brand-cyan hover:underline"
+                >
+                  Use Fidelity Default
+                </button>
+              </div>
+
+              {/* Upload Box */}
+              <div className="rounded-xl border border-dashed border-indigo-200 dark:border-cyan-500/30 bg-indigo-50/30 dark:bg-cyan-500/5 p-4 text-center">
+                <UploadCloud className="h-6 w-6 mx-auto text-brand-indigo dark:text-brand-cyan mb-1.5" />
+                <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                  {uploadedFileName ? `File Loaded: ${uploadedFileName}` : "Upload Existing Resume File"}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Supports .txt, .md, and raw resume exports
+                </p>
+                <label className="mt-2.5 inline-flex items-center gap-1.5 cursor-pointer rounded-xl bg-brand-indigo dark:bg-brand-cyan px-3 py-1.5 text-xs font-bold text-white dark:text-slate-950 shadow-xs hover:opacity-95 transition">
+                  <span>Browse Document</span>
+                  <input
+                    type="file"
+                    accept=".txt,.md,.json"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Review or Paste Resume Content
+                </label>
+                <textarea
+                  rows={9}
+                  value={existingResumeText}
+                  onChange={(e) => setExistingResumeText(e.target.value)}
+                  placeholder="Paste your existing resume here..."
+                  className="w-full rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 font-mono leading-relaxed focus:border-brand-indigo dark:focus:border-brand-cyan focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setWizardStep(1)}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark py-3 text-xs font-bold text-slate-700 dark:text-slate-300 hover:opacity-90 transition"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>Back to JD</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleProceedToInterview}
+                  className="flex-[2] flex items-center justify-center gap-2 rounded-xl bg-brand-indigo dark:bg-brand-cyan py-3 text-xs font-bold text-white dark:text-slate-950 shadow-md hover:opacity-95 transition active:scale-[0.99]"
+                >
+                  <span>Continue to Step 3: Run AI Gap Interview</span>
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
+          )}
 
-            {/* Live Step Progress List */}
-            <div className="space-y-2">
-              {[
-                { step: 1, label: "Step 1: JD Deconstruction & ATS Token Extraction", icon: Target },
-                { step: 2, label: "Step 2: Experience Splicing & Chat Ammunition Match", icon: Zap },
-                { step: 3, label: "Step 3: Resume Section Synthesis", icon: FileText },
-                { step: 4, label: "Step 4: Evaluator / Bar-Raiser ATS Audit", icon: ShieldCheck },
-                { step: 5, label: "Step 5: Self-Correction Feedback Loop", icon: RotateCcw, conditional: iterationsRun > 1 || currentStep >= 5 },
-                { step: 6, label: "Step 6: Final Verification & Verification", icon: CheckCircle2 },
-              ]
-                .filter((s) => s.conditional === undefined || s.conditional)
-                .map((s) => {
-                  const Icon = s.icon;
-                  const isDone = currentStep > s.step || (currentStep === 6 && s.step <= 6);
-                  const isCurrent = currentStep === s.step && isGenerating;
+          {/* =====================================================================
+              STAGE 3: INTERACTIVE GAP ANALYSIS & AI RECRUITER INTERVIEW
+          ===================================================================== */}
+          {wizardStep === 3 && (
+            <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-5 shadow-xs space-y-4 animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-hairline-light dark:border-hairline-dark pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 dark:bg-cyan-500/10 text-brand-indigo dark:text-brand-cyan">
+                    <Bot className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                      Step 3: AI Recruiter Gap Interview
+                    </h3>
+                    <p className="text-[10px] text-slate-500">
+                      Comparing your resume vs {targetCompany} & extracting missing credentials
+                    </p>
+                  </div>
+                </div>
 
+                <span className="rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
+                  Live Gap Diff
+                </span>
+              </div>
+
+              {/* Extracted Ammunition Badges */}
+              <div className="rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-2.5 space-y-1.5 text-[11px]">
+                <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold">
+                  <span>Captured Context Bank</span>
+                  <span className="text-brand-indigo dark:text-brand-cyan">Feeds Synthesis Chain</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {extractedData.githubUrl && (
+                    <span className="flex items-center gap-1 rounded bg-white dark:bg-slate-800 px-2 py-0.5 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
+                      <Check className="h-3 w-3" /> GitHub: {extractedData.githubUrl.replace("https://", "")}
+                    </span>
+                  )}
+                  {extractedData.additionalAchievements.length > 0 && (
+                    <span className="flex items-center gap-1 rounded bg-white dark:bg-slate-800 px-2 py-0.5 text-brand-indigo dark:text-brand-cyan border border-indigo-200 dark:border-cyan-500/30">
+                      <Zap className="h-3 w-3" /> {extractedData.additionalAchievements.length} Spliced Metric(s)
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Chat Scroll Container */}
+              <div
+                ref={chatScrollRef}
+                className="h-72 overflow-y-auto rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light/40 dark:bg-subsurface-dark/40 p-3 space-y-3 text-xs"
+              >
+                {chatMessages.map((msg) => {
+                  const isAssistant = msg.sender === "assistant";
                   return (
                     <div
-                      key={s.step}
-                      className={`flex items-center justify-between rounded-xl border p-2.5 text-xs transition ${
-                        isCurrent
-                          ? "border-brand-indigo dark:border-brand-cyan bg-indigo-50/50 dark:bg-cyan-500/10 font-bold"
-                          : isDone
-                          ? "border-hairline-light dark:border-hairline-dark bg-subsurface-light/60 dark:bg-subsurface-dark/60 text-slate-700 dark:text-slate-300"
-                          : "border-transparent text-slate-400 dark:text-slate-600 opacity-60"
-                      }`}
+                      key={msg.id}
+                      className={`flex gap-2.5 ${isAssistant ? "items-start" : "items-start flex-row-reverse"}`}
                     >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs ${
-                            isCurrent
-                              ? "bg-brand-indigo dark:bg-brand-cyan text-white dark:text-slate-950 font-bold"
-                              : isDone
-                              ? "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-400"
-                          }`}
-                        >
-                          <Icon className="h-3.5 w-3.5" />
-                        </div>
-                        <span className="text-[11px]">{s.label}</span>
+                      <div
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                          isAssistant
+                            ? "bg-brand-indigo/15 dark:bg-brand-cyan/20 text-brand-indigo dark:text-brand-cyan"
+                            : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
+                        }`}
+                      >
+                        {isAssistant ? <Bot className="h-3.5 w-3.5" /> : <UserIcon className="h-3.5 w-3.5" />}
                       </div>
 
-                      <div>
-                        {isCurrent && (
-                          <span className="font-mono text-[10px] text-brand-indigo dark:text-brand-cyan">
-                            Processing...
-                          </span>
+                      <div className="space-y-1.5 max-w-[88%]">
+                        <div
+                          className={`rounded-2xl p-3 leading-relaxed whitespace-pre-line ${
+                            isAssistant
+                              ? "bg-white dark:bg-[#070E1A] text-slate-800 dark:text-slate-200 border border-hairline-light dark:border-hairline-dark shadow-2xs"
+                              : "bg-brand-indigo dark:bg-brand-cyan text-white dark:text-slate-950 font-medium"
+                          }`}
+                        >
+                          {msg.text}
+                        </div>
+
+                        {/* Suggested Action Chips */}
+                        {isAssistant && msg.suggestedActions && msg.suggestedActions.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {msg.suggestedActions.map((action, aIdx) => (
+                              <button
+                                key={aIdx}
+                                type="button"
+                                onClick={() => handleSendChatMessage(action.payload || action.label)}
+                                className="rounded-lg border border-indigo-200 dark:border-cyan-500/30 bg-indigo-50/80 dark:bg-cyan-500/10 px-2 py-1 text-[11px] font-semibold text-brand-indigo dark:text-brand-cyan hover:opacity-90 transition active:scale-95 text-left"
+                              >
+                                {action.label}
+                              </button>
+                            ))}
+                          </div>
                         )}
-                        {isDone && <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />}
                       </div>
                     </div>
                   );
                 })}
-            </div>
 
-            {/* Evaluator Audit Card (If evaluated) */}
-            {evaluation && (
-              <div className="rounded-xl border border-indigo-200 dark:border-cyan-500/30 bg-indigo-50/40 dark:bg-cyan-500/5 p-3.5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl font-black text-slate-900 dark:text-slate-100 font-mono">
-                      {evaluation.fitScore}%
-                    </span>
-                    <div>
-                      <div className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
-                        Evaluator Fit Score
-                      </div>
-                      <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                        {evaluation.passed ? "✓ Meets Bar-Raiser Threshold" : "Optimized in Feedback Loop"}
-                      </div>
-                    </div>
-                  </div>
-
-                  <span className="rounded-full bg-white dark:bg-slate-800 px-2.5 py-1 text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300 border border-hairline-light dark:border-hairline-dark">
-                    ATS Match: {evaluation.atsMatchPercentage}%
-                  </span>
-                </div>
-
-                <p className="text-xs text-slate-600 dark:text-slate-300 italic leading-relaxed">
-                  &ldquo;{evaluation.evaluatorVerdict}&rdquo;
-                </p>
-
-                {/* Keyword Pills */}
-                <div>
-                  <div className="text-[10px] uppercase font-bold text-slate-400 mb-1.5">
-                    Found ATS Keywords ({evaluation.foundKeywords.length})
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {evaluation.foundKeywords.map((kw) => (
-                      <span
-                        key={kw}
-                        className="rounded-md bg-white dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-mono text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30"
-                      >
-                        ✓ {kw}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Critique / Improvements applied */}
-                {evaluation.critiqueNotes && evaluation.critiqueNotes.length > 0 && (
-                  <div className="pt-2 border-t border-indigo-100 dark:border-cyan-500/20 text-[11px] space-y-1">
-                    <span className="font-bold text-slate-700 dark:text-slate-300">
-                      Feedback Loop Directives Applied:
-                    </span>
-                    <ul className="space-y-0.5 text-slate-600 dark:text-slate-400 list-disc list-inside">
-                      {evaluation.critiqueNotes.map((note, idx) => (
-                        <li key={idx} className="leading-snug">
-                          {note}
-                        </li>
-                      ))}
-                    </ul>
+                {isChatLoading && (
+                  <div className="flex items-center gap-2 text-slate-400 text-xs italic">
+                    <Bot className="h-4 w-4 animate-spin text-brand-indigo dark:text-brand-cyan" />
+                    <span>Analyzing gaps against {targetCompany} and formulating question...</span>
                   </div>
                 )}
               </div>
-            )}
-          </div>
+
+              {/* Chat Input Bar */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendChatMessage();
+                }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  type="text"
+                  value={userChatInput}
+                  onChange={(e) => setUserChatInput(e.target.value)}
+                  placeholder="Type your answer, GitHub link, or specific numbers..."
+                  className="flex-1 rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark px-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-brand-indigo dark:focus:border-brand-cyan focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={!userChatInput.trim() || isChatLoading}
+                  className="rounded-xl bg-brand-indigo dark:bg-brand-cyan p-2 text-white dark:text-slate-950 disabled:opacity-40 transition shadow-xs"
+                >
+                  <SendHorizontal className="h-4 w-4" />
+                </button>
+              </form>
+
+              {/* THE CONDITIONAL GENERATE BUTTON / INTERVIEW IN-PROGRESS BANNER */}
+              <div className="pt-2 border-t border-hairline-light dark:border-hairline-dark space-y-3">
+                {!isInterviewUnlocked ? (
+                  <div className="rounded-xl border border-dashed border-hairline-light dark:border-hairline-dark bg-subsurface-light/70 dark:bg-subsurface-dark/70 p-3.5 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <HelpCircle className="h-4 w-4 text-brand-indigo dark:text-brand-cyan" />
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        AI Recruiter Questions in Progress
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Answer the question above or click a quick-reply chip to verify your GitHub and scale metrics. Once answered, the <strong className="text-slate-700 dark:text-slate-300">Generate Best-Fit Resume</strong> button will appear.
+                    </p>
+                    <div className="flex items-center justify-between pt-1 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setWizardStep(2)}
+                        className="text-slate-500 hover:underline flex items-center gap-1"
+                      >
+                        <ChevronLeft className="h-3 w-3" /> Back to Resume
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsInterviewUnlocked(true);
+                          onShowToast("Questions marked as completed. Generator unlocked!");
+                        }}
+                        className="text-brand-indigo dark:text-brand-cyan font-semibold hover:underline"
+                      >
+                        Skip questions & unlock generator ➔
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5 animate-fadeIn">
+                    <div className="flex items-center justify-between px-1">
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Questions Completed & Metrics Captured!
+                      </span>
+                      <span className="text-[11px] font-medium text-slate-500">
+                        Ready for LLM Synthesis
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleGenerate}
+                      disabled={isGenerating}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-indigo dark:bg-brand-cyan px-4 py-3.5 text-xs font-black text-white dark:text-slate-950 transition-all shadow-md hover:opacity-95 ring-2 ring-brand-indigo/30 dark:ring-brand-cyan/30 active:scale-[0.99]"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      <span>
+                        {isGenerating
+                          ? "Running Multi-Agent Chaining & Evaluator..."
+                          : `🚀 Generate Best-Fit Resume for ${targetCompany} (Run LLM Chain)`}
+                      </span>
+                    </button>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 px-1">
+                      <button
+                        type="button"
+                        onClick={() => setWizardStep(2)}
+                        className="hover:underline flex items-center gap-1"
+                      >
+                        <ChevronLeft className="h-3 w-3" /> Back to Resume
+                      </button>
+                      <span className="text-slate-400">
+                        Includes Self-Correcting Bar-Raiser Pass
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* =====================================================================
+              STAGE 4: REAL-TIME CHAIN TELEMETRY & EVALUATOR SUMMARY
+          ===================================================================== */}
+          {wizardStep === 4 && (
+            <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-5 shadow-xs space-y-4 animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-hairline-light dark:border-hairline-dark pb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <Cpu className="h-4 w-4 text-brand-indigo dark:text-brand-cyan" />
+                  Step 4: Chaining Telemetry
+                </span>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setWizardStep(3)}
+                    className="text-xs text-brand-indigo dark:text-brand-cyan hover:underline font-semibold"
+                  >
+                    Adjust Chat Inputs
+                  </button>
+                </div>
+              </div>
+
+              {/* Chain Execution Steps */}
+              <div className="space-y-2">
+                {chainLogs.map((log) => (
+                  <div
+                    key={log.step}
+                    className="rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light/60 dark:bg-subsurface-dark/60 p-3 space-y-1 text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        {log.name}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400">{log.timestamp}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                      {log.summary}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Regenerate Trigger */}
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-brand-indigo dark:hover:border-brand-cyan transition"
+              >
+                <RotateCcw className={`h-3.5 w-3.5 ${isGenerating ? "animate-spin" : ""}`} />
+                <span>Re-Run Evaluator & Synthesis Loop</span>
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* =========================================================================
-            RIGHT COLUMN (7 Cols): RESUME PREVIEW & EXPORTER TOOLBAR
-        ========================================================================= */}
+        {/* RIGHT COLUMN: RESUME PREVIEW & AUDIT REPORT (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
-          {/* Action Tabs & Export Toolbar */}
+          
+          {/* Action Tabs & Exporter Toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-3 shadow-xs">
             {/* View Switcher */}
             <div className="flex items-center gap-1 rounded-xl bg-subsurface-light dark:bg-subsurface-dark p-1 text-xs">
@@ -1056,7 +1056,7 @@ ${r.education
                 }`}
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Audit Report</span>
+                <span>Evaluator Audit</span>
               </button>
 
               <button
@@ -1115,23 +1115,24 @@ ${r.education
             </div>
           </div>
 
-          {/* =========================================================================
-              DISPLAY PANEL: TAB 1 (ATS PREVIEW), TAB 2 (AUDIT), TAB 3 (MARKDOWN), TAB 4 (JSON)
-          ========================================================================= */}
+          {/* Empty State before Generation */}
           {!generatedResume && !isGenerating && (
-            <div className="rounded-2xl border border-dashed border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-12 text-center space-y-3">
+            <div className="rounded-2xl border border-dashed border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-12 text-center space-y-4">
               <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-indigo-50 dark:bg-cyan-500/10 text-brand-indigo dark:text-brand-cyan border border-indigo-200 dark:border-cyan-500/30">
                 <FileText className="h-6 w-6" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                No Tailored Resume Generated Yet
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                Select your target JD, check the <strong>AI Gap Collector Chat</strong> to input your GitHub link or custom metrics, and click &ldquo;Generate Tailored Resume&rdquo;.
-              </p>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  Follow the 4-Step Wizard on the Left
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                  Step 1 (Target JD) ➔ Step 2 (Resume Upload) ➔ Step 3 (AI Gap Interview) ➔ Click Generate to synthesize your verified ATS resume.
+                </p>
+              </div>
             </div>
           )}
 
+          {/* Generating State */}
           {isGenerating && (
             <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-12 text-center space-y-4">
               <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-brand-indigo/10 dark:bg-brand-cyan/20 text-brand-indigo dark:text-brand-cyan">
@@ -1139,22 +1140,23 @@ ${r.education
               </div>
               <div className="space-y-1">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  Orchestrating Multi-Agent Resume Chain...
+                  Executing Multi-Agent LLM Chain with Evaluator Feedback Loop...
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                  Splicing Chat Ammunition ➔ Evaluating ATS Bar ➔ Looping if needed
+                  Extracting tokens ➔ Splicing interview answers ➔ Auditing ATS Fit ➔ Self-Correcting
                 </p>
               </div>
             </div>
           )}
 
+          {/* Render Generated Resume */}
           {generatedResume && (
             <>
               {/* TAB 1: ATS INDUSTRIAL RESUME DOCUMENT VIEW */}
               {activeViewTab === "preview" && (
                 <div
                   id="resume-printable-area"
-                  className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-white dark:bg-[#070E1A] p-8 sm:p-10 shadow-md text-slate-900 dark:text-slate-100 font-sans space-y-6 transition-colors print:p-0 print:border-none print:shadow-none print:bg-white print:text-black"
+                  className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-white dark:bg-[#070E1A] p-8 sm:p-10 shadow-md text-slate-900 dark:text-slate-100 font-sans space-y-6 transition-colors print:p-0 print:border-none print:shadow-none print:bg-white print:text-black animate-fadeIn"
                 >
                   {/* Header / Contact Info */}
                   <div className="border-b border-hairline-light dark:border-hairline-dark pb-4 space-y-1 text-center">
@@ -1173,7 +1175,7 @@ ${r.education
                         href={generatedResume.contactInfo.linkedin?.startsWith("http") ? generatedResume.contactInfo.linkedin : `https://${generatedResume.contactInfo.linkedin}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="hover:underline text-brand-indigo dark:text-brand-cyan print:text-black"
+                        className="hover:underline text-brand-indigo dark:text-brand-cyan print:text-black font-semibold"
                       >
                         LinkedIn
                       </a>
@@ -1182,9 +1184,9 @@ ${r.education
                         href={generatedResume.contactInfo.github?.startsWith("http") ? generatedResume.contactInfo.github : `https://${generatedResume.contactInfo.github}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="hover:underline text-brand-indigo dark:text-brand-cyan print:text-black"
+                        className="hover:underline text-brand-indigo dark:text-brand-cyan print:text-black font-semibold"
                       >
-                        GitHub
+                        GitHub ({generatedResume.contactInfo.github?.replace("https://github.com/", "")})
                       </a>
                     </div>
                   </div>
@@ -1312,14 +1314,14 @@ ${r.education
 
               {/* TAB 2: DETAILED EVALUATOR AUDIT REPORT */}
               {activeViewTab === "audit" && evaluation && (
-                <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-6 space-y-6">
+                <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-surface-light dark:bg-surface-dark p-6 space-y-6 animate-fadeIn">
                   <div className="flex items-center justify-between border-b border-hairline-light dark:border-hairline-dark pb-4">
                     <div>
                       <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
                         Senior Bar-Raiser ATS Evaluation Report
                       </h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Evaluated against {generatedResume.targetCompany}&apos;s required tech stack and hiring bar.
+                        Evaluated against {generatedResume.targetCompany}&apos;s required tech stack across {iterationsRun} iteration(s).
                       </p>
                     </div>
 
@@ -1328,7 +1330,7 @@ ${r.education
                         {evaluation.fitScore}%
                       </div>
                       <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                        {evaluation.passed ? "PASSED ATS BAR" : "REVISED IN FEEDBACK LOOP"}
+                        {evaluation.passed ? "PASSED ATS BAR (88%+)" : "REVISED IN FEEDBACK LOOP"}
                       </span>
                     </div>
                   </div>
@@ -1343,7 +1345,7 @@ ${r.education
                     </div>
 
                     <div className="rounded-xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-3">
-                      <span className="text-[10px] uppercase font-bold text-slate-400">Action Verb Bar</span>
+                      <span className="text-[10px] uppercase font-bold text-slate-400">Action Verb Rating</span>
                       <div className="text-lg font-black mt-1 text-emerald-600 dark:text-emerald-400">
                         {evaluation.actionVerbRating}
                       </div>
@@ -1405,7 +1407,7 @@ ${r.education
 
               {/* TAB 3: RAW MARKDOWN VIEW */}
               {activeViewTab === "markdown" && (
-                <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-4">
+                <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-4 animate-fadeIn">
                   <textarea
                     rows={22}
                     readOnly
@@ -1417,7 +1419,7 @@ ${r.education
 
               {/* TAB 4: RAW JSON VIEW */}
               {activeViewTab === "json" && (
-                <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-4">
+                <div className="rounded-2xl border border-hairline-light dark:border-hairline-dark bg-subsurface-light dark:bg-subsurface-dark p-4 animate-fadeIn">
                   <textarea
                     rows={22}
                     readOnly

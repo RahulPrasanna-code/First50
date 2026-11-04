@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     if (apiKey) {
       try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
 
         const prompt = `
 You are a Staff Software Engineer and Senior Technical Interview Coach for Tier-1 Product Companies and FinTechs (Razorpay, Stripe, Swiggy, Cred, AWS).
